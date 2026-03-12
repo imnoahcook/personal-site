@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, Suspense } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { Physics, useSphere, useBox } from '@react-three/cannon'
+import { OrbitControls } from '@react-three/drei'
 import type { Mesh } from 'three'
 import * as THREE from 'three'
 
@@ -109,19 +110,15 @@ function ControllableCube({ onFlyChange, positionRef }: { onFlyChange: (f: boole
   )
 }
 
-function FollowCamera({ positionRef }: { positionRef: React.MutableRefObject<[number, number, number]> }) {
-  const { camera } = useThree()
-  const smoothPos = useRef(new THREE.Vector3(0, 5, 12))
+function CameraTarget({ positionRef, controlsRef }: { positionRef: React.MutableRefObject<[number, number, number]>; controlsRef: React.MutableRefObject<{ target: THREE.Vector3 } | null> }) {
+  const smoothTarget = useRef(new THREE.Vector3(0, 3, 0))
 
   useFrame(() => {
-    const [x, y] = positionRef.current
-    const targetX = x
-    const targetY = y + 3
-    const targetZ = 12
-
-    smoothPos.current.lerp(new THREE.Vector3(targetX, targetY, targetZ), 0.05)
-    camera.position.copy(smoothPos.current)
-    camera.lookAt(x, y, 0)
+    const [x, y, z] = positionRef.current
+    smoothTarget.current.lerp(new THREE.Vector3(x, y, z), 0.05)
+    if (controlsRef.current) {
+      controlsRef.current.target.copy(smoothTarget.current)
+    }
   })
 
   return null
@@ -198,8 +195,14 @@ function Ground() {
   return (
     <mesh ref={ref} receiveShadow>
       <boxGeometry args={[40, 0.2, 10]} />
-      <meshStandardMaterial color="#111" roughness={1} />
+      <meshStandardMaterial color="#1a1a2e" roughness={0.8} metalness={0.2} />
     </mesh>
+  )
+}
+
+function GridFloor() {
+  return (
+    <gridHelper args={[40, 40, '#00cc8844', '#ffffff10']} position={[0, 0.01, 0]} />
   )
 }
 
@@ -225,6 +228,7 @@ function Walls() {
 export default function PhysicsPlayground() {
   const [flying, setFlying] = useState(false)
   const cubePos = useRef<[number, number, number]>([0, 3, 0])
+  const controlsRef = useRef<{ target: THREE.Vector3 } | null>(null)
   return (
     <div style={{ width: '100%', height: '100vh', background: '#0a0a0a', paddingTop: '48px' }}>
       <Canvas
@@ -233,7 +237,7 @@ export default function PhysicsPlayground() {
         style={{ width: '100%', height: '100%' }}
       >
         <color attach="background" args={['#0a0a0a']} />
-        <fog attach="fog" args={['#0a0a0a', 10, 30]} />
+        <fog attach="fog" args={['#0a0a0a', 15, 40]} />
 
         <ambientLight intensity={0.6} />
         <directionalLight
@@ -250,6 +254,7 @@ export default function PhysicsPlayground() {
           <Physics gravity={[0, -9.81, 0]}>
             <ControllableCube onFlyChange={setFlying} positionRef={cubePos} />
             <Ground />
+            <GridFloor />
             <Walls />
 
             {/* Block tower 1 */}
@@ -277,7 +282,16 @@ export default function PhysicsPlayground() {
           </Physics>
         </Suspense>
 
-        <FollowCamera positionRef={cubePos} />
+        <CameraTarget positionRef={cubePos} controlsRef={controlsRef} />
+        <OrbitControls
+          ref={controlsRef}
+          enablePan={false}
+          maxPolarAngle={Math.PI / 2.1}
+          minDistance={5}
+          maxDistance={25}
+          enableDamping
+          dampingFactor={0.1}
+        />
       </Canvas>
 
       <div style={{
@@ -327,7 +341,7 @@ export default function PhysicsPlayground() {
         textAlign: 'center',
         pointerEvents: 'none',
       }}>
-        WASD to move &bull; W to jump &bull; F to toggle fly
+        WASD to move &bull; W to jump &bull; F to toggle fly &bull; Click + drag to orbit
       </div>
     </div>
   )

@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "vercel dev",
+    "build": "vercel build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -32,6 +32,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vercel/node": "^5.6.15",
+    "@vercel/node-bridge": "^4.0.1",
     "@vitejs/plugin-react": "^5.1.1",
     "drizzle-kit": "^0.31.9",
     "eslint": "^9.39.1",
@@ -41,6 +42,7 @@
     "tailwindcss": "^4.2.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
+    "vercel": "^50.32.4",
     "vite": "^7.3.1"
   }
 }

@@ -262,12 +262,13 @@ const PIANO_KEYS = [
   { note: 'A', freq: 440.0, black: false },
   { note: 'A#', freq: 466.16, black: true },
   { note: 'B', freq: 493.88, black: false },
-  { note: 'C2', freq: 523.25, black: false },
+  { note: 'C', freq: 523.25, black: false },
+  { note: 'C', freq: 523.25, black: false },
 ]
 
 const KEYBOARD_MAP: Record<string, number> = {
   a: 0, w: 1, s: 2, e: 3, d: 4, f: 5,
-  t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12,
+  t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12, l: 13,
 }
 
 function RetroPiano() {

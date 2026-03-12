@@ -110,7 +110,7 @@ function ControllableCube({ onFlyChange, positionRef }: { onFlyChange: (f: boole
   )
 }
 
-function CameraTarget({ positionRef, controlsRef }: { positionRef: React.MutableRefObject<[number, number, number]>; controlsRef: React.MutableRefObject<{ target: THREE.Vector3 } | null> }) {
+function CameraTarget({ positionRef, controlsRef }: { positionRef: React.MutableRefObject<[number, number, number]>; controlsRef: React.RefObject<React.ComponentRef<typeof OrbitControls> | null> }) {
   const smoothTarget = useRef(new THREE.Vector3(0, 3, 0))
 
   useFrame(() => {
@@ -228,7 +228,7 @@ function Walls() {
 export default function PhysicsPlayground() {
   const [flying, setFlying] = useState(false)
   const cubePos = useRef<[number, number, number]>([0, 3, 0])
-  const controlsRef = useRef<{ target: THREE.Vector3 } | null>(null)
+  const controlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null)
   return (
     <div style={{ width: '100%', height: '100vh', background: '#0a0a0a', paddingTop: '48px' }}>
       <Canvas

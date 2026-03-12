@@ -519,6 +519,36 @@
   pointer-events: none;
 }
 
+/* Low-poly rabbit */
+.og-rabbit {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 200px;
+  height: 200px;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.og-rabbit canvas {
+  pointer-events: none;
+}
+
+.og-rabbit-speech {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 10, 20, 0.9);
+  border: 1px solid #00ff99;
+  color: #00ff99;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .og-layout {
@@ -552,6 +582,10 @@
   }
 
   .og-widget {
+    display: none;
+  }
+
+  .og-rabbit {
     display: none;
   }
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import LowPolyRabbit from '../components/LowPolyRabbit'
 import './OG.css'
 
 type Tab = 'home' | 'blog' | 'about' | 'music' | 'art' | 'contact'
@@ -112,14 +113,19 @@ function DraggableWidget() {
 }
 
 function VisitorCounter() {
-  const { data } = useQuery({
-    queryKey: ['visitors', 'og'],
-    queryFn: () => fetch('/api/visitors?page=og', { method: 'POST' }).then((r) => r.json()),
-    staleTime: Infinity,
-    retry: false,
+  const hasFired = useRef(false)
+  const increment = useMutation({
+    mutationFn: () => fetch('/api/visitors?page=og', { method: 'POST' }).then((r) => r.json()),
   })
 
-  const display = data?.count ?? 0
+  useEffect(() => {
+    if (hasFired.current) return
+    hasFired.current = true
+    increment.mutate()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const display = increment.data?.count ?? 0
   return (
     <div className="og-visitor-counter">
       <span className="og-counter-label">visitors:</span>
@@ -449,13 +455,7 @@ export default function OG() {
 
       <div className="og-marquee-container">
         <div className="og-marquee">
-          <span>
-            {'★ '}welcome to noah&apos;s corner of the internet{'  ★  '}
-            best viewed at 1024x768{'  ★  '}
-            made with mass amounts of caffeine{'  ★  '}
-            you are visitor #{Math.floor(Math.random() * 9000) + 1337}{'  ★  '}
-            under construction since forever{'  ★  '}
-          </span>
+          <span>hi</span>
         </div>
       </div>
 
@@ -480,6 +480,7 @@ export default function OG() {
         </main>
       </div>
 
+      <LowPolyRabbit />
       <DraggableWidget />
     </div>
   )

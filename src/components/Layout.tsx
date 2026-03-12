@@ -6,6 +6,7 @@ export default function Layout() {
   const location = useLocation()
   const contentRef = useRef<HTMLDivElement>(null)
   const [displayLocation, setDisplayLocation] = useState(location)
+  const converted = localStorage.getItem('og-converted') === 'true'
 
   useEffect(() => {
     if (location.pathname === displayLocation.pathname) return
@@ -35,8 +36,8 @@ export default function Layout() {
     <>
       <nav className="fixed top-0 left-0 w-full z-[100] flex items-center justify-center gap-6 py-4 px-6 bg-black/40 backdrop-blur-md border-b border-white/5">
         <NavLink to="/" label="Home" current={location.pathname} />
-        <NavLink to="/physics" label="Physics" current={location.pathname} />
-        <NavLink to="/platformer" label="Platformer" current={location.pathname} />
+        {!converted && <NavLink to="/physics" label="Physics" current={location.pathname} />}
+        {!converted && <NavLink to="/platformer" label="Platformer" current={location.pathname} />}
         <NavLink to="/og" label="OG" current={location.pathname} />
       </nav>
       <div ref={contentRef} style={{ opacity: 1 }}>

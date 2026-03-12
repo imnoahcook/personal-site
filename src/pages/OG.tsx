@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import './OG.css'
 
 type Tab = 'home' | 'blog' | 'about' | 'music' | 'art' | 'contact'
@@ -103,7 +104,7 @@ function DraggableWidget() {
   return (
     <div ref={ref} className="og-widget" onMouseDown={onMouseDown}>
       <div className="og-widget-links">
-        <a href="/">main site</a> | <a href="/physics">physics</a>
+        <a href="/">main site</a>
       </div>
       <div className="og-widget-text">hi! you can move me</div>
     </div>
@@ -111,21 +112,19 @@ function DraggableWidget() {
 }
 
 function VisitorCounter() {
-  const [count, setCount] = useState<number | null>(null)
+  const { data } = useQuery({
+    queryKey: ['visitors', 'og'],
+    queryFn: () => fetch('/api/visitors?page=og', { method: 'POST' }).then((r) => r.json()),
+    staleTime: Infinity,
+    retry: false,
+  })
 
-  useEffect(() => {
-    fetch('/api/visitors?page=og', { method: 'POST' })
-      .then((r) => r.json())
-      .then((d) => setCount(d.count))
-      .catch(() => setCount(1337))
-  }, [])
-
-  const display = count ?? 0
+  const display = data?.count ?? 0
   return (
     <div className="og-visitor-counter">
       <span className="og-counter-label">visitors:</span>
       <span className="og-counter-digits">
-        {String(display).padStart(6, '0').split('').map((d, i) => (
+        {String(display).padStart(6, '0').split('').map((d: string, i: number) => (
           <span key={i} className="og-counter-digit">{d}</span>
         ))}
       </span>
@@ -133,54 +132,60 @@ function VisitorCounter() {
   )
 }
 
+const FAKE_ENTRIES: Post[] = [
+  { id: -1, author: 'xX_c00lk1d_Xx', message: 'awesome site dude!! love the stars background', stars: 42, created_at: '2006-08-14T00:00:00Z' },
+  { id: -2, author: 'webmaster_jane', message: 'linked u on my webrings page. keep it real!', stars: 28, created_at: '2006-07-22T00:00:00Z' },
+  { id: -3, author: 'anonymous', message: 'how do i make my site look like this?? teach me', stars: 15, created_at: '2006-06-03T00:00:00Z' },
+]
+
 function Guestbook() {
-  const [posts, setPosts] = useState<Post[]>([])
+  const queryClient = useQueryClient()
   const [starred, setStarred] = useState<Set<number>>(new Set())
   const [author, setAuthor] = useState('')
   const [message, setMessage] = useState('')
-  const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    fetch('/api/posts')
-      .then((r) => r.json())
-      .then((data) => setPosts(data))
-      .catch(() => {})
-  }, [])
+  const { data: posts = [] } = useQuery<Post[]>({
+    queryKey: ['posts'],
+    queryFn: () => fetch('/api/posts').then((r) => r.json()),
+  })
+
+  const createPost = useMutation({
+    mutationFn: (body: { author: string; message: string }) =>
+      fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }).then((r) => r.json()),
+    onSuccess: (newPost: Post) => {
+      queryClient.setQueryData<Post[]>(['posts'], (old = []) => [newPost, ...old])
+      setAuthor('')
+      setMessage('')
+    },
+  })
+
+  const starPost = useMutation({
+    mutationFn: (id: number) =>
+      fetch(`/api/stars?id=${id}`, { method: 'POST' }).then((r) => r.json()),
+    onMutate: (id: number) => {
+      setStarred((prev) => new Set(prev).add(id))
+      queryClient.setQueryData<Post[]>(['posts'], (old = []) =>
+        old.map((p) => (p.id === id ? { ...p, stars: p.stars + 1 } : p))
+      )
+    },
+  })
 
   const handleStar = (id: number) => {
     if (starred.has(id)) return
-    setStarred((prev) => new Set(prev).add(id))
-    setPosts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, stars: p.stars + 1 } : p))
-    )
-    fetch(`/api/stars?id=${id}`, { method: 'POST' }).catch(() => {})
+    starPost.mutate(id)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!author.trim() || !message.trim() || submitting) return
-    setSubmitting(true)
-    fetch('/api/posts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ author: author.trim(), message: message.trim() }),
-    })
-      .then((r) => r.json())
-      .then((post) => {
-        setPosts((prev) => [post, ...prev])
-        setAuthor('')
-        setMessage('')
-      })
-      .finally(() => setSubmitting(false))
+    if (!author.trim() || !message.trim() || createPost.isPending) return
+    createPost.mutate({ author: author.trim(), message: message.trim() })
   }
 
-  const fakeEntries: Post[] = [
-    { id: -1, author: 'xX_c00lk1d_Xx', message: 'awesome site dude!! love the stars background', stars: 42, created_at: '2006-08-14T00:00:00Z' },
-    { id: -2, author: 'webmaster_jane', message: 'linked u on my webrings page. keep it real!', stars: 28, created_at: '2006-07-22T00:00:00Z' },
-    { id: -3, author: 'anonymous', message: 'how do i make my site look like this?? teach me', stars: 15, created_at: '2006-06-03T00:00:00Z' },
-  ]
-
-  const allPosts = [...posts, ...fakeEntries]
+  const allPosts = [...posts, ...FAKE_ENTRIES]
 
   return (
     <div className="og-section">
@@ -230,8 +235,8 @@ function Guestbook() {
           maxLength={500}
           rows={3}
         />
-        <button className="og-gb-submit" type="submit" disabled={submitting}>
-          {submitting ? 'posting...' : '>> sign guestbook'}
+        <button className="og-gb-submit" type="submit" disabled={createPost.isPending}>
+          {createPost.isPending ? 'posting...' : '>> sign guestbook'}
         </button>
       </form>
     </div>

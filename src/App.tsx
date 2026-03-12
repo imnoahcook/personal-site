@@ -313,6 +313,9 @@ export default function App() {
         <p className="text-xs tracking-[0.2em] uppercase text-neutral-600">
           Built with React + Three.js + Anime.js
         </p>
+        <p className="text-xs mt-4 text-neutral-500 italic">
+          This website is perpetually under construction, just like all of us.
+        </p>
       </footer>
     </div>
   )

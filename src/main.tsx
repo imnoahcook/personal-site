@@ -19,7 +19,7 @@ function HomePage() {
     const timer = setTimeout(() => {
       localStorage.setItem(CONVERTED_KEY, 'true')
       setConverted(true)
-    }, 10000)
+    }, 5000)
     return () => clearTimeout(timer)
   }, [converted])
 

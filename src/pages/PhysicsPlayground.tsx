@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, Suspense } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Physics, useSphere, useBox } from '@react-three/cannon'
-import { OrbitControls } from '@react-three/drei'
 import type { Mesh } from 'three'
+import * as THREE from 'three'
 
 function useKeys() {
   const keys = useRef<Set<string>>(new Set())
@@ -19,7 +19,7 @@ function useKeys() {
   return keys
 }
 
-function ControllableCube({ onFlyChange }: { onFlyChange: (f: boolean) => void }) {
+function ControllableCube({ onFlyChange, positionRef }: { onFlyChange: (f: boolean) => void; positionRef: React.MutableRefObject<[number, number, number]> }) {
   const keys = useKeys()
   const [flying, setFlying] = useState(false)
   const flyRef = useRef(false)
@@ -36,9 +36,10 @@ function ControllableCube({ onFlyChange }: { onFlyChange: (f: boolean) => void }
 
   const velocity = useRef([0, 0, 0])
   useEffect(() => {
-    const unsub = api.velocity.subscribe((v) => { velocity.current = v })
-    return unsub
-  }, [api])
+    const unsubVel = api.velocity.subscribe((v) => { velocity.current = v })
+    const unsubPos = api.position.subscribe((p) => { positionRef.current = p as [number, number, number] })
+    return () => { unsubVel(); unsubPos() }
+  }, [api, positionRef])
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -106,6 +107,24 @@ function ControllableCube({ onFlyChange }: { onFlyChange: (f: boolean) => void }
       />
     </mesh>
   )
+}
+
+function FollowCamera({ positionRef }: { positionRef: React.MutableRefObject<[number, number, number]> }) {
+  const { camera } = useThree()
+  const smoothPos = useRef(new THREE.Vector3(0, 5, 12))
+
+  useFrame(() => {
+    const [x, y] = positionRef.current
+    const targetX = x
+    const targetY = y + 3
+    const targetZ = 12
+
+    smoothPos.current.lerp(new THREE.Vector3(targetX, targetY, targetZ), 0.05)
+    camera.position.copy(smoothPos.current)
+    camera.lookAt(x, y, 0)
+  })
+
+  return null
 }
 
 function StackBlock({ position, size, color }: { position: [number, number, number]; size: [number, number, number]; color: string }) {
@@ -205,6 +224,7 @@ function Walls() {
 
 export default function PhysicsPlayground() {
   const [flying, setFlying] = useState(false)
+  const cubePos = useRef<[number, number, number]>([0, 3, 0])
   return (
     <div style={{ width: '100%', height: '100vh', background: '#0a0a0a', paddingTop: '48px' }}>
       <Canvas
@@ -228,7 +248,7 @@ export default function PhysicsPlayground() {
 
         <Suspense fallback={null}>
           <Physics gravity={[0, -9.81, 0]}>
-            <ControllableCube onFlyChange={setFlying} />
+            <ControllableCube onFlyChange={setFlying} positionRef={cubePos} />
             <Ground />
             <Walls />
 
@@ -257,12 +277,7 @@ export default function PhysicsPlayground() {
           </Physics>
         </Suspense>
 
-        <OrbitControls
-          enablePan={false}
-          maxPolarAngle={Math.PI / 2}
-          minDistance={5}
-          maxDistance={20}
-        />
+        <FollowCamera positionRef={cubePos} />
       </Canvas>
 
       <div style={{
@@ -312,7 +327,7 @@ export default function PhysicsPlayground() {
         textAlign: 'center',
         pointerEvents: 'none',
       }}>
-        WASD to move &bull; W to jump &bull; F to toggle fly &bull; Scroll to zoom
+        WASD to move &bull; W to jump &bull; F to toggle fly
       </div>
     </div>
   )

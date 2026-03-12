@@ -19,7 +19,7 @@ interface Post {
   author: string
   message: string
   stars: number
-  created_at: string
+  createdAt: string
 }
 
 function StarField() {
@@ -139,9 +139,9 @@ function VisitorCounter() {
 }
 
 const FAKE_ENTRIES: Post[] = [
-  { id: -1, author: 'xX_c00lk1d_Xx', message: 'awesome site dude!! love the stars background', stars: 42, created_at: '2006-08-14T00:00:00Z' },
-  { id: -2, author: 'webmaster_jane', message: 'linked u on my webrings page. keep it real!', stars: 28, created_at: '2006-07-22T00:00:00Z' },
-  { id: -3, author: 'anonymous', message: 'how do i make my site look like this?? teach me', stars: 15, created_at: '2006-06-03T00:00:00Z' },
+  { id: -1, author: 'xX_c00lk1d_Xx', message: 'awesome site dude!! love the stars background', stars: 42, createdAt: '2006-08-14T00:00:00Z' },
+  { id: -2, author: 'webmaster_jane', message: 'linked u on my webrings page. keep it real!', stars: 28, createdAt: '2006-07-22T00:00:00Z' },
+  { id: -3, author: 'anonymous', message: 'how do i make my site look like this?? teach me', stars: 15, createdAt: '2006-06-03T00:00:00Z' },
 ]
 
 function Guestbook() {
@@ -198,7 +198,7 @@ function Guestbook() {
       <h2 className="og-heading">guestbook</h2>
       <div className="og-guestbook">
         {allPosts.map((post) => {
-          const date = new Date(post.created_at)
+          const date = new Date(post.createdAt)
           const dateStr = `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}/${date.getFullYear()}`
           const isFake = post.id < 0
           return (

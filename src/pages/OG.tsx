@@ -337,11 +337,7 @@ function TabContent({ tab }: { tab: Tab }) {
           <h1 className="og-title">welcome to my site</h1>
           <div className="og-section">
             <p className="og-text">
-              hey i&apos;m noah. i build things for the internet. i like code, music,
-              and making pixels do weird things. this page is a tribute to the beautiful
-              chaos of the early web — when every site had a starfield background,
-              visitor counters were flex, and &quot;under construction&quot; was a
-              permanent state of being.
+              this website is under construction, just like all of us
             </p>
           </div>
           <Guestbook />
@@ -373,16 +369,14 @@ function TabContent({ tab }: { tab: Tab }) {
             <p className="og-text">
               i&apos;m noah. developer, creator, explorer. i spend most of my time
               building things for the internet — from full-stack web apps to generative
-              art to AI systems. i believe the best software feels like magic.
-            </p>
+              art to AI systems.            </p>
           </div>
           <div className="og-section">
             <h2 className="og-heading">fun facts</h2>
             <ul className="og-link-list">
               <li className="og-text">{'>> '}i&apos;ve been writing code since i was a kid</li>
               <li className="og-text">{'>> '}my favorite color is whatever #00ff99 is</li>
-              <li className="og-text">{'>> '}i think Comic Sans gets a bad rap</li>
-              <li className="og-text">{'>> '}this page took mass amounts of caffeine to make</li>
+              <li className="og-text">{'>> '}i code with Comic Sans</li>
             </ul>
           </div>
         </>
@@ -426,13 +420,6 @@ function TabContent({ tab }: { tab: Tab }) {
       return (
         <>
           <h1 className="og-title">contact</h1>
-          <div className="og-section">
-            <h2 className="og-heading">get in touch</h2>
-            <p className="og-text">
-              want to say hi? collaborate on something? tell me my site is cool?
-              (or roast it, i can take it)
-            </p>
-          </div>
           <div className="og-section">
             <h2 className="og-heading">my links</h2>
             <ul className="og-link-list">

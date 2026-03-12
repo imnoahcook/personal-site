@@ -108,27 +108,26 @@ function Rabbit({ containerRef }: { containerRef: React.RefObject<HTMLDivElement
 }
 
 export default function LowPolyRabbit() {
-  const [hovered, setHovered] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   return (
-    <div
-      ref={containerRef}
-      className="og-rabbit"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <Canvas
-        camera={{ position: [0, 0, 4], fov: 40 }}
-        style={{ background: 'transparent' }}
-        gl={{ alpha: true }}
+    <div className="og-rabbit-container">
+      <div className="og-rabbit-bubble">hi i&apos;m the rabbit. this is my site now.</div>
+      <div
+        ref={containerRef}
+        className="og-rabbit"
       >
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[3, 3, 5]} intensity={1} />
-        <directionalLight position={[-2, -1, 3]} intensity={0.3} />
-        <Rabbit containerRef={containerRef} />
-      </Canvas>
-      {hovered && <div className="og-rabbit-speech">:3</div>}
+        <Canvas
+          camera={{ position: [0, 0, 4], fov: 40 }}
+          style={{ background: 'transparent' }}
+          gl={{ alpha: true }}
+        >
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[3, 3, 5]} intensity={1} />
+          <directionalLight position={[-2, -1, 3]} intensity={0.3} />
+          <Rabbit containerRef={containerRef} />
+        </Canvas>
+      </div>
     </div>
   )
 }

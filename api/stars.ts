@@ -10,7 +10,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const client = postgres(process.env.DATABASE_URL!, { prepare: false })
+  if (!process.env.DATABASE_URL) {
+    res.status(500).json({ error: 'DATABASE_URL not set' })
+    return
+  }
+
+  const client = postgres(process.env.DATABASE_URL, { prepare: false })
   const db = drizzle(client)
 
   try {
@@ -32,6 +37,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     res.json({ stars: result[0].stars })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
   } finally {
     await client.end()
   }

@@ -70,47 +70,6 @@ function StarField() {
   return <canvas ref={canvasRef} className="og-starfield" />
 }
 
-function DraggableWidget() {
-  const ref = useRef<HTMLDivElement>(null)
-  const dragging = useRef(false)
-  const offset = useRef({ x: 0, y: 0 })
-
-  const onMouseDown = (e: React.MouseEvent) => {
-    dragging.current = true
-    const rect = ref.current!.getBoundingClientRect()
-    offset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
-    document.body.style.userSelect = 'none'
-  }
-
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
-      if (!dragging.current || !ref.current) return
-      ref.current.style.left = e.clientX - offset.current.x + 'px'
-      ref.current.style.top = e.clientY - offset.current.y + 'px'
-      ref.current.style.right = 'auto'
-      ref.current.style.bottom = 'auto'
-    }
-    const onMouseUp = () => {
-      dragging.current = false
-      document.body.style.userSelect = ''
-    }
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-    }
-  }, [])
-
-  return (
-    <div ref={ref} className="og-widget" onMouseDown={onMouseDown}>
-      <div className="og-widget-links">
-        <a href="/">main site</a>
-      </div>
-      <div className="og-widget-text">hi! you can move me</div>
-    </div>
-  )
-}
 
 function VisitorCounter() {
   const hasFired = useRef(false)
@@ -469,7 +428,6 @@ export default function OG() {
       </div>
 
       <LowPolyRabbit />
-      <DraggableWidget />
     </div>
   )
 }

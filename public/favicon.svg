@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bg)"/>
+  <!-- Subtle shine overlay -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#shine)"/>
+  <!-- "N" letter - geometric/angular style -->
+  <path d="M14 48V16h5l12 20V16h5v32h-5L19 28v20z" fill="#fff" opacity="0.95"/>
+  <!-- "C" letter - geometric style -->
+  <path d="M42 24c0-1.5 1.2-3 4-3 2 0 3.5.8 4.5 2l3-3.5C51.5 17.2 49 16 45.5 16 40.5 16 37 19.8 37 25v14c0 5.2 3.5 9 8.5 9 3.5 0 6-1.2 8-3.5l-3-3.5c-1 1.2-2.5 2-4.5 2-2.8 0-4-1.5-4-3z" fill="#fff" opacity="0.95"/>
+</svg>

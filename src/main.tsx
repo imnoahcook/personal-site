@@ -1,10 +1,22 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
-import App from './App.tsx'
+import Layout from './components/Layout'
+import App from './App'
+import PhysicsPlayground from './pages/PhysicsPlayground'
+import Platformer from './pages/Platformer'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<App />} />
+          <Route path="/physics" element={<PhysicsPlayground />} />
+          <Route path="/platformer" element={<Platformer />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   </StrictMode>,
 )

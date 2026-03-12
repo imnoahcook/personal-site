@@ -6,6 +6,7 @@ import Layout from './components/Layout'
 import App from './App'
 import PhysicsPlayground from './pages/PhysicsPlayground'
 import Platformer from './pages/Platformer'
+import OG from './pages/OG'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -15,6 +16,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<App />} />
           <Route path="/physics" element={<PhysicsPlayground />} />
           <Route path="/platformer" element={<Platformer />} />
+          <Route path="/og" element={<OG />} />
         </Route>
       </Routes>
     </BrowserRouter>

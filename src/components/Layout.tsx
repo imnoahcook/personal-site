@@ -37,6 +37,7 @@ export default function Layout() {
         <NavLink to="/" label="Home" current={location.pathname} />
         <NavLink to="/physics" label="Physics" current={location.pathname} />
         <NavLink to="/platformer" label="Platformer" current={location.pathname} />
+        <NavLink to="/og" label="OG" current={location.pathname} />
       </nav>
       <div ref={contentRef} style={{ opacity: 1 }}>
         <Outlet />

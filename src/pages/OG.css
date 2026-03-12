@@ -1,0 +1,348 @@
+/* ===== OG PAGE - NEOCITIES AESTHETIC ===== */
+
+.og-page {
+  position: relative;
+  min-height: 100vh;
+  background: #0a0a1a;
+  overflow-x: hidden;
+  font-family: 'Times New Roman', 'Georgia', serif;
+  color: #e0e0e0;
+  padding-top: 60px; /* space for site nav */
+}
+
+/* Starfield canvas */
+.og-starfield {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Marquee banner */
+.og-marquee-container {
+  position: relative;
+  z-index: 2;
+  background: #000;
+  border-top: 2px solid #00ff99;
+  border-bottom: 2px solid #00ff99;
+  padding: 6px 0;
+  overflow: hidden;
+}
+
+.og-marquee {
+  display: flex;
+  white-space: nowrap;
+  animation: og-scroll 20s linear infinite;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 14px;
+  color: #ffff00;
+}
+
+.og-marquee span {
+  display: inline-block;
+  padding-right: 100vw;
+}
+
+@keyframes og-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+/* Main layout */
+.og-layout {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  gap: 20px;
+  min-height: calc(100vh - 100px);
+}
+
+/* Sidebar */
+.og-sidebar {
+  flex-shrink: 0;
+  width: 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 3px solid #00ff99;
+  border-radius: 4px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  align-self: flex-start;
+  position: sticky;
+  top: 80px;
+}
+
+.og-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 2px solid #cc0000;
+  background: linear-gradient(180deg, #1a0030 0%, #0d001a 100%);
+  color: #ffffff;
+  text-decoration: none;
+  font-family: 'Arial', sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  transition: all 0.2s;
+  justify-content: center;
+}
+
+.og-sidebar-link:hover {
+  background: linear-gradient(180deg, #2a0050 0%, #1a0030 100%);
+  border-color: #ff3333;
+  text-shadow: 0 0 8px #ff3333;
+}
+
+.og-sidebar-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.og-sidebar-label {
+  font-size: 13px;
+}
+
+/* Main content area */
+.og-main {
+  flex: 1;
+  border: 3px solid #00ff99;
+  border-radius: 4px;
+  background: rgba(0, 0, 20, 0.75);
+  padding: 30px;
+  min-height: 600px;
+}
+
+.og-title {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 36px;
+  color: #00ccff;
+  margin: 0 0 10px 0;
+  text-shadow: 2px 2px 4px rgba(0, 200, 255, 0.3);
+}
+
+/* Sections */
+.og-section {
+  margin: 30px 0;
+  padding-bottom: 20px;
+  border-bottom: 1px dashed #333;
+}
+
+.og-heading {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 24px;
+  color: #ff66ff;
+  margin: 0 0 12px 0;
+  text-shadow: 1px 1px 3px rgba(255, 100, 255, 0.3);
+}
+
+.og-text {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #cccccc;
+}
+
+/* Links list */
+.og-link-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.og-link-list li {
+  margin: 8px 0;
+}
+
+.og-link-list a {
+  color: #3333ff;
+  font-size: 16px;
+  font-weight: bold;
+  text-decoration: underline;
+  font-family: 'Times New Roman', serif;
+}
+
+.og-link-list a:hover {
+  color: #6666ff;
+  text-shadow: 0 0 8px #6666ff;
+}
+
+/* Guestbook */
+.og-guestbook {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.og-guestbook-entry {
+  border: 1px solid #444;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 12px;
+}
+
+.og-guestbook-entry p {
+  margin: 6px 0 0 0;
+  color: #aaa;
+  font-size: 14px;
+}
+
+.og-gb-name {
+  color: #00ff99;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.og-gb-date {
+  color: #666;
+  font-size: 12px;
+  margin-left: 12px;
+  font-family: 'Courier New', monospace;
+}
+
+/* Under construction */
+.og-construction {
+  margin: 40px 0 20px 0;
+  text-align: center;
+  padding: 20px;
+  border: 2px dashed #ffff00;
+  background: rgba(255, 255, 0, 0.03);
+}
+
+.og-blink {
+  display: block;
+  font-family: 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: bold;
+  color: #ffff00;
+  animation: og-blink-anim 1s step-end infinite;
+  margin-bottom: 8px;
+}
+
+@keyframes og-blink-anim {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.og-construction p {
+  color: #888;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Visitor counter */
+.og-visitor-counter {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.og-counter-label {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  color: #888;
+  font-size: 12px;
+  margin-right: 8px;
+  text-transform: uppercase;
+}
+
+.og-counter-digits {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.og-counter-digit {
+  display: inline-block;
+  width: 18px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  background: #111;
+  border: 1px solid #333;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Draggable widget */
+.og-widget {
+  position: fixed;
+  bottom: 120px;
+  right: 40px;
+  z-index: 50;
+  border: 2px solid #00ff99;
+  background: rgba(0, 10, 20, 0.9);
+  padding: 10px 14px;
+  cursor: grab;
+  user-select: none;
+  font-family: 'Arial', sans-serif;
+  font-size: 12px;
+}
+
+.og-widget:active {
+  cursor: grabbing;
+}
+
+.og-widget-links {
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.og-widget-links a {
+  color: #00ccff;
+  text-decoration: none;
+  font-size: 11px;
+}
+
+.og-widget-links a:hover {
+  text-decoration: underline;
+}
+
+.og-widget-text {
+  color: #888;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .og-layout {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .og-sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    position: static;
+    justify-content: center;
+  }
+
+  .og-sidebar-link {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .og-sidebar-icon {
+    font-size: 16px;
+  }
+
+  .og-main {
+    padding: 16px;
+  }
+
+  .og-title {
+    font-size: 24px;
+  }
+
+  .og-widget {
+    display: none;
+  }
+}

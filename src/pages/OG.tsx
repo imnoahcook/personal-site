@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './OG.css'
 
 type Tab = 'home' | 'blog' | 'about' | 'music' | 'art' | 'contact'
@@ -11,6 +11,14 @@ const sidebarLinks: { icon: string; label: Tab }[] = [
   { icon: '/og-icons/art.gif', label: 'art' },
   { icon: '/og-icons/ampersat.gif', label: 'contact' },
 ]
+
+interface Post {
+  id: number
+  author: string
+  message: string
+  stars: number
+  created_at: string
+}
 
 function StarField() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -95,7 +103,7 @@ function DraggableWidget() {
   return (
     <div ref={ref} className="og-widget" onMouseDown={onMouseDown}>
       <div className="og-widget-links">
-        <a href="/">main site</a> | <a href="/physics">physics</a> | <a href="/platformer">platformer</a>
+        <a href="/">main site</a> | <a href="/physics">physics</a>
       </div>
       <div className="og-widget-text">hi! you can move me</div>
     </div>
@@ -103,15 +111,209 @@ function DraggableWidget() {
 }
 
 function VisitorCounter() {
-  const [count] = useState(() => Math.floor(Math.random() * 9000) + 1337)
+  const [count, setCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    fetch('/api/visitors?page=og', { method: 'POST' })
+      .then((r) => r.json())
+      .then((d) => setCount(d.count))
+      .catch(() => setCount(1337))
+  }, [])
+
+  const display = count ?? 0
   return (
     <div className="og-visitor-counter">
       <span className="og-counter-label">visitors:</span>
       <span className="og-counter-digits">
-        {String(count).padStart(6, '0').split('').map((d, i) => (
+        {String(display).padStart(6, '0').split('').map((d, i) => (
           <span key={i} className="og-counter-digit">{d}</span>
         ))}
       </span>
+    </div>
+  )
+}
+
+function Guestbook() {
+  const [posts, setPosts] = useState<Post[]>([])
+  const [starred, setStarred] = useState<Set<number>>(new Set())
+  const [author, setAuthor] = useState('')
+  const [message, setMessage] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/posts')
+      .then((r) => r.json())
+      .then((data) => setPosts(data))
+      .catch(() => {})
+  }, [])
+
+  const handleStar = (id: number) => {
+    if (starred.has(id)) return
+    setStarred((prev) => new Set(prev).add(id))
+    setPosts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, stars: p.stars + 1 } : p))
+    )
+    fetch(`/api/stars?id=${id}`, { method: 'POST' }).catch(() => {})
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!author.trim() || !message.trim() || submitting) return
+    setSubmitting(true)
+    fetch('/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ author: author.trim(), message: message.trim() }),
+    })
+      .then((r) => r.json())
+      .then((post) => {
+        setPosts((prev) => [post, ...prev])
+        setAuthor('')
+        setMessage('')
+      })
+      .finally(() => setSubmitting(false))
+  }
+
+  const fakeEntries: Post[] = [
+    { id: -1, author: 'xX_c00lk1d_Xx', message: 'awesome site dude!! love the stars background', stars: 42, created_at: '2006-08-14T00:00:00Z' },
+    { id: -2, author: 'webmaster_jane', message: 'linked u on my webrings page. keep it real!', stars: 28, created_at: '2006-07-22T00:00:00Z' },
+    { id: -3, author: 'anonymous', message: 'how do i make my site look like this?? teach me', stars: 15, created_at: '2006-06-03T00:00:00Z' },
+  ]
+
+  const allPosts = [...posts, ...fakeEntries]
+
+  return (
+    <div className="og-section">
+      <h2 className="og-heading">guestbook</h2>
+      <div className="og-guestbook">
+        {allPosts.map((post) => {
+          const date = new Date(post.created_at)
+          const dateStr = `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}/${date.getFullYear()}`
+          const isFake = post.id < 0
+          return (
+            <div key={post.id} className="og-guestbook-entry">
+              <div className="og-gb-header">
+                <span>
+                  <span className="og-gb-name">{post.author}</span>
+                  <span className="og-gb-date">{dateStr}</span>
+                </span>
+                <button
+                  className={`og-star-btn${starred.has(post.id) || isFake ? ' og-starred' : ''}`}
+                  onClick={() => !isFake && handleStar(post.id)}
+                  disabled={isFake}
+                  title={isFake ? 'from the archives' : starred.has(post.id) ? 'starred!' : 'give a star'}
+                >
+                  {starred.has(post.id) ? '\u2605' : '\u2606'} {post.stars}
+                </button>
+              </div>
+              <p>{post.message}</p>
+            </div>
+          )
+        })}
+      </div>
+
+      <form className="og-gb-form" onSubmit={handleSubmit}>
+        <h2 className="og-heading">sign my guestbook!!</h2>
+        <input
+          className="og-gb-input"
+          type="text"
+          placeholder="your name (e.g. xX_h4ck3r_Xx)"
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          maxLength={50}
+        />
+        <textarea
+          className="og-gb-textarea"
+          placeholder="leave a message..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          maxLength={500}
+          rows={3}
+        />
+        <button className="og-gb-submit" type="submit" disabled={submitting}>
+          {submitting ? 'posting...' : '>> sign guestbook'}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+const PIANO_KEYS = [
+  { note: 'C', freq: 261.63, black: false },
+  { note: 'C#', freq: 277.18, black: true },
+  { note: 'D', freq: 293.66, black: false },
+  { note: 'D#', freq: 311.13, black: true },
+  { note: 'E', freq: 329.63, black: false },
+  { note: 'F', freq: 349.23, black: false },
+  { note: 'F#', freq: 369.99, black: true },
+  { note: 'G', freq: 392.0, black: false },
+  { note: 'G#', freq: 415.3, black: true },
+  { note: 'A', freq: 440.0, black: false },
+  { note: 'A#', freq: 466.16, black: true },
+  { note: 'B', freq: 493.88, black: false },
+  { note: 'C2', freq: 523.25, black: false },
+]
+
+const KEYBOARD_MAP: Record<string, number> = {
+  a: 0, w: 1, s: 2, e: 3, d: 4, f: 5,
+  t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12,
+}
+
+function RetroPiano() {
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const [activeKeys, setActiveKeys] = useState<Set<number>>(new Set())
+
+  const playNote = useCallback((freq: number, index: number) => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioContext()
+    }
+    const ctx = audioCtxRef.current
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'square'
+    osc.frequency.setValueAtTime(freq, ctx.currentTime)
+    gain.gain.setValueAtTime(0.15, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8)
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.8)
+
+    setActiveKeys((prev) => new Set(prev).add(index))
+    setTimeout(() => {
+      setActiveKeys((prev) => {
+        const next = new Set(prev)
+        next.delete(index)
+        return next
+      })
+    }, 150)
+  }, [])
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const index = KEYBOARD_MAP[e.key.toLowerCase()]
+      if (index !== undefined) {
+        playNote(PIANO_KEYS[index].freq, index)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [playNote])
+
+  return (
+    <div className="og-piano-wrapper">
+      <div className="og-piano-label">~ click or use keyboard (A-K) ~</div>
+      <div className="og-piano">
+        {PIANO_KEYS.map((key, i) => (
+          <button
+            key={key.note}
+            className={`og-piano-key ${key.black ? 'og-piano-black' : 'og-piano-white'} ${activeKeys.has(i) ? 'og-piano-active' : ''}`}
+            onMouseDown={() => playNote(key.freq, i)}
+          >
+            <span className="og-piano-note">{key.note}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -131,26 +333,7 @@ function TabContent({ tab }: { tab: Tab }) {
               permanent state of being.
             </p>
           </div>
-          <div className="og-section">
-            <h2 className="og-heading">guestbook</h2>
-            <div className="og-guestbook">
-              <div className="og-guestbook-entry">
-                <span className="og-gb-name">xX_c00lk1d_Xx</span>
-                <span className="og-gb-date">03/13/2026</span>
-                <p>awesome site dude!! love the stars background</p>
-              </div>
-              <div className="og-guestbook-entry">
-                <span className="og-gb-name">webmaster_jane</span>
-                <span className="og-gb-date">03/12/2026</span>
-                <p>linked u on my webrings page. keep it real!</p>
-              </div>
-              <div className="og-guestbook-entry">
-                <span className="og-gb-name">anonymous</span>
-                <span className="og-gb-date">03/10/2026</span>
-                <p>how do i make my site look like this?? teach me</p>
-              </div>
-            </div>
-          </div>
+          <Guestbook />
           <div className="og-construction">
             <span className="og-blink">{'>>> '}PAGE UNDER CONSTRUCTION{'  <<<'}</span>
             <p>more stuff coming soon... probably... eventually...</p>
@@ -163,20 +346,9 @@ function TabContent({ tab }: { tab: Tab }) {
         <>
           <h1 className="og-title">blog</h1>
           <div className="og-section">
-            <h2 className="og-heading">03/13/2026 - the return of the old web</h2>
-            <p className="og-text">
-              remember when the internet was fun? when every site was a unique expression
-              of someone&apos;s personality? no cookie-cutter templates, no algorithms
-              deciding what you see. just pure, unfiltered creativity. i miss that.
-              so i built this page as a love letter to those days.
-            </p>
-          </div>
-          <div className="og-section">
             <h2 className="og-heading">03/10/2026 - first post!!</h2>
             <p className="og-text">
-              hello world! this blog is where i&apos;ll dump my thoughts about code,
-              the internet, music, and whatever else is rattling around in my brain.
-              stay tuned i guess lol
+              my first website was about ninjas and written in dreamweaver
             </p>
           </div>
         </>
@@ -208,39 +380,15 @@ function TabContent({ tab }: { tab: Tab }) {
       return (
         <>
           <h1 className="og-title">my music</h1>
-          <div className="og-section">
-            <h2 className="og-heading">what i&apos;m listening to</h2>
-            <p className="og-text">
-              music is a huge part of my life. here&apos;s some stuff i&apos;ve been
-              into lately. imagine there&apos;s an auto-playing MIDI file right now.
-              you can hear it in your heart.
-            </p>
-          </div>
-          <div className="og-section">
-            <h2 className="og-heading">current rotation</h2>
-            <ul className="og-link-list">
-              <li><span className="og-text">{'>> '}whatever sounds good at 3am</span></li>
-              <li><span className="og-text">{'>> '}lo-fi beats to code to</span></li>
-              <li><span className="og-text">{'>> '}that one song on repeat for 6 hours</span></li>
-              <li><span className="og-text">{'>> '}early 2000s nostalgia hits</span></li>
-            </ul>
-          </div>
-          <div className="og-construction">
-            <span className="og-blink">{'♪ ♫ ♪ ♫ ♪ ♫'}</span>
-            <p>embedded player coming soon... when i figure out how to autoplay MIDI in 2026</p>
-          </div>
+          <RetroPiano />
         </>
       )
     case 'art':
       return (
         <>
-          <h1 className="og-title">art</h1>
+          <h1 className="og-title">what is art really?</h1>
           <div className="og-section">
-            <h2 className="og-heading">creative works</h2>
-            <p className="og-text">
-              i make things with code that (hopefully) look cool. generative art,
-              shaders, creative coding experiments — where math meets aesthetics.
-            </p>
+            <p className="og-text">i can&apos;t draw</p>
           </div>
           <div className="og-section">
             <h2 className="og-heading">gallery</h2>
@@ -281,13 +429,6 @@ function TabContent({ tab }: { tab: Tab }) {
               <li><a href="https://linkedin.com/in/noahpcook" target="_blank" rel="noopener noreferrer">{'>> '}linkedin</a></li>
               <li><a href="mailto:imnoahcook@gmail.com">{'>> '}email me</a></li>
             </ul>
-          </div>
-          <div className="og-section">
-            <h2 className="og-heading">sign my guestbook!!</h2>
-            <p className="og-text">
-              (guestbook form coming soon... for now just email me and i&apos;ll
-              manually add your entry like it&apos;s 2003)
-            </p>
           </div>
         </>
       )

@@ -253,6 +253,92 @@
   font-family: 'Courier New', monospace;
 }
 
+.og-gb-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.og-star-btn {
+  background: none;
+  border: 1px solid #444;
+  color: #888;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 8px;
+  transition: all 0.2s;
+}
+
+.og-star-btn:hover:not(:disabled) {
+  border-color: #ffff00;
+  color: #ffff00;
+}
+
+.og-star-btn.og-starred {
+  color: #ffff00;
+  border-color: #ffff00;
+}
+
+.og-star-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* Guestbook form */
+.og-gb-form {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px dashed #333;
+}
+
+.og-gb-input,
+.og-gb-textarea {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid #444;
+  color: #ccc;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.og-gb-input:focus,
+.og-gb-textarea:focus {
+  border-color: #00ff99;
+}
+
+.og-gb-textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.og-gb-submit {
+  background: none;
+  border: 2px solid #00ff99;
+  color: #00ff99;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.og-gb-submit:hover:not(:disabled) {
+  background: rgba(0, 255, 153, 0.1);
+  text-shadow: 0 0 8px #00ff99;
+}
+
+.og-gb-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Under construction */
 .og-construction {
   margin: 40px 0 20px 0;
@@ -354,6 +440,83 @@
   color: #888;
   font-size: 11px;
   text-align: center;
+}
+
+/* Retro Piano */
+.og-piano-wrapper {
+  text-align: center;
+}
+
+.og-piano-label {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 12px;
+  animation: og-blink-anim 1.5s step-end infinite;
+}
+
+.og-piano {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  height: 140px;
+  user-select: none;
+}
+
+.og-piano-key {
+  position: relative;
+  border: 2px outset #999;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  transition: none;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+.og-piano-key:active,
+.og-piano-active {
+  border-style: inset;
+}
+
+.og-piano-white {
+  width: 42px;
+  height: 140px;
+  background: linear-gradient(to bottom, #f0f0e8, #d8d8c8);
+  color: #444;
+  font-size: 11px;
+  z-index: 1;
+  box-shadow: 1px 1px 0 #666, 2px 2px 0 #444;
+}
+
+.og-piano-white:active,
+.og-piano-white.og-piano-active {
+  background: linear-gradient(to bottom, #e0e0d0, #c0c0b0);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.og-piano-black {
+  width: 28px;
+  height: 90px;
+  background: linear-gradient(to bottom, #222, #000);
+  color: #888;
+  font-size: 9px;
+  margin-left: -14px;
+  margin-right: -14px;
+  z-index: 2;
+  box-shadow: 1px 1px 0 #000, 2px 2px 0 #000;
+}
+
+.og-piano-black:active,
+.og-piano-black.og-piano-active {
+  background: linear-gradient(to bottom, #333, #111);
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.og-piano-note {
+  pointer-events: none;
 }
 
 /* ===== RESPONSIVE ===== */

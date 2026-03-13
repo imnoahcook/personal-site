@@ -38,21 +38,37 @@ function StarField() {
     resize()
     window.addEventListener('resize', resize)
 
-    const stars = Array.from({ length: 200 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      size: Math.random() * 2 + 0.5,
-      speed: Math.random() * 0.3 + 0.05,
-      brightness: Math.random(),
-      phase: Math.random() * Math.PI * 2,
-    }))
+    const colors = [
+      [255, 255, 255],   // white
+      [200, 180, 255],   // lavender
+      [255, 150, 200],   // pink
+      [150, 200, 255],   // light blue
+      [180, 130, 255],   // purple
+      [255, 200, 230],   // soft pink
+      [145, 235, 255],   // teal
+    ]
+
+    const stars = Array.from({ length: 300 }, () => {
+      const color = colors[Math.floor(Math.random() * colors.length)]
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2.5 + 0.3,
+        speed: Math.random() * 0.3 + 0.05,
+        brightness: Math.random() * 0.7 + 0.3,
+        phase: Math.random() * Math.PI * 2,
+        r: color[0],
+        g: color[1],
+        b: color[2],
+      }
+    })
 
     let animId: number
     const draw = (time: number) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       for (const star of stars) {
         const twinkle = 0.4 + 0.6 * Math.sin(time * 0.001 * star.speed + star.phase)
-        ctx.fillStyle = `rgba(255, 255, 255, ${twinkle * star.brightness})`
+        ctx.fillStyle = `rgba(${star.r}, ${star.g}, ${star.b}, ${twinkle * star.brightness})`
         ctx.beginPath()
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2)
         ctx.fill()

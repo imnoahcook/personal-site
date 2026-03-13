@@ -1,6 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+import { pgTable, text, integer, timestamp, serial } from 'drizzle-orm/pg-core'
 import { desc } from 'drizzle-orm'
-import { posts, createDb } from './_db'
+
+const posts = pgTable('posts', {
+  id: serial('id').primaryKey(),
+  author: text('author').notNull(),
+  message: text('message').notNull(),
+  stars: integer('stars').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!process.env.DATABASE_URL) {
@@ -8,7 +18,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const { client, db } = createDb()
+  const client = postgres(process.env.DATABASE_URL, { prepare: false })
+  const db = drizzle(client)
 
   try {
     if (req.method === 'POST') {

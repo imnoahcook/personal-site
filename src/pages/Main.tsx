@@ -486,7 +486,7 @@ function TabContent({ tab }: { tab: Tab }) {
           <h1 className="og-title">welcome to my site</h1>
           <div className="og-section">
             <p className="og-text">
-              this website is under construction, just like all of us
+              this website is perpetually under construction, just like all of us
             </p>
           </div>
           <Guestbook />

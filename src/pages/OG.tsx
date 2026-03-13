@@ -176,6 +176,7 @@ function Guestbook() {
   const [message, setMessage] = useState('')
   const [banned, setBanned] = useState(() => localStorage.getItem(BANNED_KEY) === 'true')
   const [showBanModal, setShowBanModal] = useState(false)
+  const [fakeStars, setFakeStars] = useState<Record<number, number>>({})
 
   const { data: posts = [] } = useQuery<Post[]>({
     queryKey: ['posts'],
@@ -209,7 +210,13 @@ function Guestbook() {
 
   const handleStar = (id: number) => {
     if (starred.has(id)) return
-    starPost.mutate(id)
+    if (id < 0) {
+      // fake entries: client-side only star
+      setStarred((prev) => new Set(prev).add(id))
+      setFakeStars((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }))
+    } else {
+      starPost.mutate(id)
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -243,12 +250,11 @@ function Guestbook() {
                   <span className="og-gb-date">{dateStr}</span>
                 </span>
                 <button
-                  className={`og-star-btn${starred.has(post.id) || isFake ? ' og-starred' : ''}`}
-                  onClick={() => !isFake && handleStar(post.id)}
-                  disabled={isFake}
-                  title={isFake ? 'from the archives' : starred.has(post.id) ? 'starred!' : 'give a star'}
+                  className={`og-star-btn${starred.has(post.id) ? ' og-starred' : ''}`}
+                  onClick={() => handleStar(post.id)}
+                  title={starred.has(post.id) ? 'starred!' : 'give a star'}
                 >
-                  {starred.has(post.id) ? '\u2605' : '\u2606'} {post.stars}
+                  {starred.has(post.id) ? '\u2605' : '\u2606'} {post.stars + (fakeStars[post.id] ?? 0)}
                 </button>
               </div>
               <p>{post.message}</p>
@@ -278,6 +284,7 @@ function Guestbook() {
       ) : (
         <form className="og-gb-form" onSubmit={handleSubmit}>
           <h2 className="og-heading">sign my guestbook!!</h2>
+          <p className="og-text" style={{ marginBottom: 12 }}>this may be the only chance we will know each other on this tiny blue dot. say something</p>
           <input
             className="og-gb-input"
             type="text"

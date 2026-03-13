@@ -15,6 +15,7 @@ const posts = pgTable('posts', {
   author: text('author').notNull(),
   message: text('message').notNull(),
   stars: integer('stars').notNull().default(0),
+  country: text('country').notNull().default('US'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
@@ -40,11 +41,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return
       }
 
+      const country = (req.headers['x-vercel-ip-country'] as string) ?? 'US'
+
       const result = await db
         .insert(posts)
         .values({
           author: stripTags(String(author)).slice(0, 50),
           message: stripTags(String(message)).slice(0, 500),
+          country: country.slice(0, 2).toUpperCase(),
         })
         .returning()
 

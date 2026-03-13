@@ -21,7 +21,16 @@ interface Post {
   author: string
   message: string
   stars: number
+  country: string
   createdAt: string
+}
+
+function countryFlag(code: string): string {
+  const upper = code.toUpperCase()
+  if (upper.length !== 2) return ''
+  return String.fromCodePoint(
+    ...upper.split('').map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)
+  )
 }
 
 function StarField() {
@@ -194,9 +203,9 @@ import { containsBannedWord } from '../bannedWords'
 const BANNED_KEY = 'og-banned-v2'
 
 const FAKE_ENTRIES: Post[] = [
-  { id: -1, author: 'xX_c00lk1d_Xx', message: 'awesome site dude!! love the stars background', stars: 42, createdAt: '2006-08-14T00:00:00Z' },
-  { id: -2, author: 'webmaster_jane', message: 'linked u on my webrings page. keep it real!', stars: 28, createdAt: '2006-07-22T00:00:00Z' },
-  { id: -3, author: 'anonymous', message: 'how do i make my site look like this?? teach me', stars: 15, createdAt: '2006-06-03T00:00:00Z' },
+  { id: -1, author: 'xX_c00lk1d_Xx', message: 'awesome site dude!! love the stars background', stars: 42, country: 'US', createdAt: '2006-08-14T00:00:00Z' },
+  { id: -2, author: 'webmaster_jane', message: 'linked u on my webrings page. keep it real!', stars: 28, country: 'CA', createdAt: '2006-07-22T00:00:00Z' },
+  { id: -3, author: 'anonymous', message: 'how do i make my site look like this?? teach me', stars: 15, country: 'BR', createdAt: '2006-06-03T00:00:00Z' },
 ]
 
 function Guestbook() {
@@ -269,7 +278,7 @@ function Guestbook() {
             <div key={post.id} className="og-guestbook-entry">
               <div className="og-gb-header">
                 <span>
-                  <span className="og-gb-name">{post.author}</span>
+                  <span className="og-gb-name">{countryFlag(post.country)} {post.author}</span>
                   <span className="og-gb-date">{dateStr}</span>
                 </span>
                 <button

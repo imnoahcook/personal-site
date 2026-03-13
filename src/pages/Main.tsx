@@ -204,8 +204,8 @@ const BANNED_KEY = 'og-banned-v2'
 
 const FAKE_ENTRIES: Post[] = [
   { id: -1, author: 'xX_c00lk1d_Xx', message: 'awesome site dude!! love the stars background', stars: 42, country: 'US', createdAt: '2006-08-14T00:00:00Z' },
-  { id: -2, author: 'webmaster_jane', message: 'linked u on my webrings page. keep it real!', stars: 28, country: 'CA', createdAt: '2006-07-22T00:00:00Z' },
-  { id: -3, author: 'anonymous', message: 'how do i make my site look like this?? teach me', stars: 15, country: 'BR', createdAt: '2006-06-03T00:00:00Z' },
+  { id: -2, author: 'webmaster_jane', message: 'linked u on my webrings page. keep it real!', stars: 28, country: 'US', createdAt: '2006-07-22T00:00:00Z' },
+  { id: -3, author: 'anonymous', message: 'how do i make my site look like this?? teach me', stars: 15, country: 'US', createdAt: '2006-06-03T00:00:00Z' },
 ]
 
 function Guestbook() {

@@ -8,13 +8,11 @@
   font-family: 'Times New Roman', 'Georgia', serif;
   color: #e0e0e0;
   padding-top: 60px; /* space for site nav */
-  cursor: none;
 }
 
-.og-page *,
 .og-page a,
 .og-page button {
-  cursor: none;
+  cursor: pointer;
 }
 
 /* Starfield canvas */

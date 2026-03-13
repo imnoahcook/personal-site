@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Canvas, useFrame } from '@react-three/fiber'
-import type { Group } from 'three'
+// import { Canvas, useFrame } from '@react-three/fiber'
+// import type { Group } from 'three'
 import LowPolyRabbit from '../components/LowPolyRabbit'
 import './Main.css'
 
@@ -89,82 +89,78 @@ function StarField() {
 }
 
 
-function SwordMesh() {
-  const groupRef = useRef<Group>(null)
-
-  useFrame(() => {
-    if (!groupRef.current) return
-    groupRef.current.position.y = Math.sin(Date.now() * 0.003) * 0.04
-  })
-
-  return (
-    <group ref={groupRef} rotation={[0.3, -0.5, 0.45]} position={[0, 0.05, 0]}>
-      {/* Diamond blade — octahedron stretched tall and thin */}
-      <mesh position={[0, 0.35, 0]} scale={[0.18, 0.9, 0.08]}>
-        <octahedronGeometry args={[1, 0]} />
-        <meshStandardMaterial color="#d8e8f0" flatShading />
-      </mesh>
-      {/* Crossguard — flat diamond */}
-      <mesh position={[0, -0.5, 0]} rotation={[0, 0, Math.PI / 4]} scale={[0.22, 0.22, 0.1]}>
-        <octahedronGeometry args={[1, 0]} />
-        <meshStandardMaterial color="#e8c840" flatShading />
-      </mesh>
-      {/* Handle — chunky box */}
-      <mesh position={[0, -0.75, 0]}>
-        <boxGeometry args={[0.09, 0.3, 0.09]} />
-        <meshStandardMaterial color="#a06830" flatShading />
-      </mesh>
-      {/* Pommel — tetrahedron */}
-      <mesh position={[0, -0.94, 0]} scale={[0.8, 0.8, 0.8]}>
-        <tetrahedronGeometry args={[0.08, 0]} />
-        <meshStandardMaterial color="#e8c840" flatShading />
-      </mesh>
-    </group>
-  )
-}
-
-function SwordCursor() {
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    el.style.display = 'none'
-    const onMove = (e: MouseEvent) => {
-      el.style.display = 'block'
-      el.style.transform = `translate(${e.clientX - 20}px, ${e.clientY - 8}px)`
-    }
-    window.addEventListener('mousemove', onMove)
-    return () => window.removeEventListener('mousemove', onMove)
-  }, [])
-
-  return (
-    <div
-      ref={ref}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: 64,
-        height: 64,
-        pointerEvents: 'none',
-        zIndex: 9999,
-      }}
-    >
-      <Canvas
-        camera={{ position: [0, 0, 4], fov: 40 }}
-        gl={{ alpha: true }}
-        style={{ background: 'transparent' }}
-        events={() => ({ enabled: false, priority: 0, compute: () => {}, connected: undefined })}
-      >
-        <ambientLight intensity={0.9} />
-        <directionalLight position={[3, 4, 5]} intensity={1.5} />
-        <directionalLight position={[-2, -1, 3]} intensity={0.5} />
-        <SwordMesh />
-      </Canvas>
-    </div>
-  )
-}
+// function SwordMesh() {
+//   const groupRef = useRef<Group>(null)
+//
+//   useFrame(() => {
+//     if (!groupRef.current) return
+//     groupRef.current.position.y = Math.sin(Date.now() * 0.003) * 0.04
+//   })
+//
+//   return (
+//     <group ref={groupRef} rotation={[0.3, -0.5, 0.45]} position={[0, 0.05, 0]}>
+//       <mesh position={[0, 0.35, 0]} scale={[0.18, 0.9, 0.08]}>
+//         <octahedronGeometry args={[1, 0]} />
+//         <meshStandardMaterial color="#d8e8f0" flatShading />
+//       </mesh>
+//       <mesh position={[0, -0.5, 0]} rotation={[0, 0, Math.PI / 4]} scale={[0.22, 0.22, 0.1]}>
+//         <octahedronGeometry args={[1, 0]} />
+//         <meshStandardMaterial color="#e8c840" flatShading />
+//       </mesh>
+//       <mesh position={[0, -0.75, 0]}>
+//         <boxGeometry args={[0.09, 0.3, 0.09]} />
+//         <meshStandardMaterial color="#a06830" flatShading />
+//       </mesh>
+//       <mesh position={[0, -0.94, 0]} scale={[0.8, 0.8, 0.8]}>
+//         <tetrahedronGeometry args={[0.08, 0]} />
+//         <meshStandardMaterial color="#e8c840" flatShading />
+//       </mesh>
+//     </group>
+//   )
+// }
+//
+// function SwordCursor() {
+//   const ref = useRef<HTMLDivElement>(null)
+//
+//   useEffect(() => {
+//     const el = ref.current
+//     if (!el) return
+//     el.style.display = 'none'
+//     const onMove = (e: MouseEvent) => {
+//       el.style.display = 'block'
+//       el.style.transform = `translate(${e.clientX - 55}px, ${e.clientY - 20}px)`
+//     }
+//     window.addEventListener('mousemove', onMove)
+//     return () => window.removeEventListener('mousemove', onMove)
+//   }, [])
+//
+//   return (
+//     <div
+//       ref={ref}
+//       style={{
+//         position: 'fixed',
+//         top: 0,
+//         left: 0,
+//         width: 192,
+//         height: 192,
+//         pointerEvents: 'none',
+//         zIndex: 9999,
+//       }}
+//     >
+//       <Canvas
+//         camera={{ position: [0, 0, 4], fov: 40 }}
+//         gl={{ alpha: true }}
+//         style={{ background: 'transparent' }}
+//         events={() => ({ enabled: false, priority: 0, compute: () => {}, connected: undefined })}
+//       >
+//         <ambientLight intensity={0.9} />
+//         <directionalLight position={[3, 4, 5]} intensity={1.5} />
+//         <directionalLight position={[-2, -1, 3]} intensity={0.5} />
+//         <SwordMesh />
+//       </Canvas>
+//     </div>
+//   )
+// }
 
 
 function VisitorCounter() {
@@ -631,7 +627,7 @@ export default function Main() {
   return (
     <div className="og-page">
       <StarField />
-      <SwordCursor />
+      {/* <SwordCursor /> */}
 
       <div className="og-wordart-container">
         <h1 className="og-wordart">Noah Cook</h1>

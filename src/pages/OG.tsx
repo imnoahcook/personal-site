@@ -176,7 +176,7 @@ function Guestbook() {
   const [message, setMessage] = useState('')
   const [banned, setBanned] = useState(() => localStorage.getItem(BANNED_KEY) === 'true')
   const [showBanModal, setShowBanModal] = useState(false)
-  const [fakeStars, setFakeStars] = useState<Record<number, number>>({})
+  const pendingStarsRef = useRef<Set<number>>(new Set())
 
   const { data: posts = [] } = useQuery<Post[]>({
     queryKey: ['posts'],
@@ -197,26 +197,37 @@ function Guestbook() {
     },
   })
 
-  const starPost = useMutation({
-    mutationFn: (id: number) =>
-      fetch(`/api/stars?id=${id}`, { method: 'POST' }).then((r) => r.json()),
-    onMutate: (id: number) => {
-      setStarred((prev) => new Set(prev).add(id))
-      queryClient.setQueryData<Post[]>(['posts'], (old = []) =>
-        old.map((p) => (p.id === id ? { ...p, stars: p.stars + 1 } : p))
-      )
-    },
-  })
+  // Keep pending stars ref in sync (only real post IDs)
+  useEffect(() => {
+    pendingStarsRef.current = new Set([...starred].filter((id) => id > 0))
+  }, [starred])
+
+  // Flush pending stars to server on page leave
+  useEffect(() => {
+    const flush = () => {
+      for (const id of pendingStarsRef.current) {
+        navigator.sendBeacon(`/api/stars?id=${id}`)
+      }
+      pendingStarsRef.current.clear()
+    }
+    window.addEventListener('beforeunload', flush)
+    window.addEventListener('pagehide', flush)
+    return () => {
+      window.removeEventListener('beforeunload', flush)
+      window.removeEventListener('pagehide', flush)
+    }
+  }, [])
 
   const handleStar = (id: number) => {
-    if (starred.has(id)) return
-    if (id < 0) {
-      // fake entries: client-side only star
-      setStarred((prev) => new Set(prev).add(id))
-      setFakeStars((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }))
-    } else {
-      starPost.mutate(id)
-    }
+    setStarred((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -251,9 +262,9 @@ function Guestbook() {
                 <button
                   className={`og-star-btn${starred.has(post.id) ? ' og-starred' : ''}`}
                   onClick={() => handleStar(post.id)}
-                  title={starred.has(post.id) ? 'starred!' : 'give a star'}
+                  title={starred.has(post.id) ? 'click to unstar' : 'give a star'}
                 >
-                  {starred.has(post.id) ? '\u2605' : '\u2606'} {post.stars + (fakeStars[post.id] ?? 0)}
+                  {starred.has(post.id) ? '\u2605' : '\u2606'} {post.stars + (starred.has(post.id) ? 1 : 0)}
                 </button>
               </div>
               <p>{post.message}</p>

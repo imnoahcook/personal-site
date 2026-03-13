@@ -40,6 +40,10 @@ const BANNED_WORDS = [
   'hitler', 'h1tler',
 ]
 
+function stripTags(text: string): string {
+  return text.replace(/<[^>]*>/g, '')
+}
+
 function containsBannedWord(text: string): boolean {
   const normalized = text.toLowerCase().replace(/[\s._\-*#!¢$@]+/g, '')
   return BANNED_WORDS.some((word) => {
@@ -81,8 +85,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const result = await db
         .insert(posts)
         .values({
-          author: String(author).slice(0, 50),
-          message: String(message).slice(0, 500),
+          author: stripTags(String(author)).slice(0, 50),
+          message: stripTags(String(message)).slice(0, 500),
         })
         .returning()
 

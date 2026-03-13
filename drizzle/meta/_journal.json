@@ -8,6 +8,13 @@
       "when": 1773340513334,
       "tag": "0000_high_titanium_man",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773342168019,
+      "tag": "0001_lonely_redwing",
+      "breakpoints": true
     }
   ]
 }

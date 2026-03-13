@@ -402,45 +402,6 @@
   font-weight: bold;
 }
 
-/* Draggable widget */
-.og-widget {
-  position: fixed;
-  bottom: 120px;
-  right: 40px;
-  z-index: 50;
-  border: 2px solid #00ff99;
-  background: rgba(0, 10, 20, 0.9);
-  padding: 10px 14px;
-  cursor: grab;
-  user-select: none;
-  font-family: 'Arial', sans-serif;
-  font-size: 12px;
-}
-
-.og-widget:active {
-  cursor: grabbing;
-}
-
-.og-widget-links {
-  color: #aaa;
-  margin-bottom: 4px;
-}
-
-.og-widget-links a {
-  color: #00ccff;
-  text-decoration: none;
-  font-size: 11px;
-}
-
-.og-widget-links a:hover {
-  text-decoration: underline;
-}
-
-.og-widget-text {
-  color: #888;
-  font-size: 11px;
-  text-align: center;
-}
 
 /* Retro Piano */
 .og-piano-wrapper {
@@ -598,9 +559,6 @@
     font-size: 24px;
   }
 
-  .og-widget {
-    display: none;
-  }
 
   .og-rabbit {
     display: none;

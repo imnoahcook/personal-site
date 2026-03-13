@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useCallback } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -109,9 +109,46 @@ function Rabbit({ containerRef }: { containerRef: React.RefObject<HTMLDivElement
 
 export default function LowPolyRabbit() {
   const containerRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const dragging = useRef(false)
+  const offset = useRef({ x: 0, y: 0 })
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    dragging.current = true
+    const rect = wrapperRef.current!.getBoundingClientRect()
+    offset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+    wrapperRef.current!.setPointerCapture(e.pointerId)
+  }, [])
+
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!dragging.current) return
+      el.style.left = e.clientX - offset.current.x + 'px'
+      el.style.top = e.clientY - offset.current.y + 'px'
+      el.style.right = 'auto'
+      el.style.bottom = 'auto'
+    }
+    const onPointerUp = () => {
+      dragging.current = false
+    }
+
+    el.addEventListener('pointermove', onPointerMove)
+    el.addEventListener('pointerup', onPointerUp)
+    return () => {
+      el.removeEventListener('pointermove', onPointerMove)
+      el.removeEventListener('pointerup', onPointerUp)
+    }
+  }, [])
 
   return (
-    <div className="og-rabbit-container">
+    <div
+      ref={wrapperRef}
+      className="og-rabbit-container"
+      onPointerDown={onPointerDown}
+    >
       <div className="og-rabbit-bubble">hi i&apos;m the rabbit. this is my site now.</div>
       <div
         ref={containerRef}

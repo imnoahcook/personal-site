@@ -552,6 +552,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.og-rabbit-container:active {
+  cursor: grabbing;
 }
 
 .og-rabbit-bubble {
@@ -587,7 +594,7 @@
 }
 
 .og-rabbit canvas {
-  pointer-events: none;
+  pointer-events: none !important;
 }
 
 /* ===== RESPONSIVE ===== */
@@ -623,7 +630,19 @@
   }
 
 
+  .og-rabbit-container {
+    bottom: 10px;
+    right: 10px;
+  }
+
+  .og-rabbit-bubble {
+    font-size: 10px;
+    padding: 4px 8px;
+    max-width: 120px;
+  }
+
   .og-rabbit {
-    display: none;
+    width: 120px;
+    height: 120px;
   }
 }

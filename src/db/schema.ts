@@ -11,5 +11,6 @@ export const posts = pgTable('posts', {
   author: text('author').notNull(),
   message: text('message').notNull(),
   stars: integer('stars').notNull().default(0),
+  country: text('country').notNull().default('US'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })

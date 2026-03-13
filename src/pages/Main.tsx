@@ -215,12 +215,17 @@ function Guestbook() {
   const [message, setMessage] = useState('')
   const [banned, setBanned] = useState(() => localStorage.getItem(BANNED_KEY) === 'true')
   const [showBanModal, setShowBanModal] = useState(false)
+  const [myCountry, setMyCountry] = useState('')
   const firedStarsRef = useRef<Set<number>>(new Set())
 
   const { data: posts = [] } = useQuery<Post[]>({
     queryKey: ['posts'],
     queryFn: () => fetch('/api/posts').then((r) => r.json()),
   })
+
+  useEffect(() => {
+    fetch('/api/country').then((r) => r.json()).then((d) => setMyCountry(d.country)).catch(() => {})
+  }, [])
 
   const createPost = useMutation({
     mutationFn: (body: { author: string; message: string }) =>
@@ -278,7 +283,7 @@ function Guestbook() {
             <div key={post.id} className="og-guestbook-entry">
               <div className="og-gb-header">
                 <span>
-                  <span className="og-gb-name">{countryFlag(post.country)} {post.author}</span>
+                  <span className="og-gb-name">{post.author} {countryFlag(post.country)}</span>
                   <span className="og-gb-date">{dateStr}</span>
                 </span>
                 <button
@@ -334,7 +339,7 @@ function Guestbook() {
             rows={3}
           />
           <button className="og-gb-submit" type="submit" disabled={createPost.isPending}>
-            {createPost.isPending ? 'posting...' : '>> sign guestbook'}
+            {createPost.isPending ? 'posting...' : `>> sign guestbook ${myCountry ? countryFlag(myCountry) : ''}`}
           </button>
         </form>
       )}

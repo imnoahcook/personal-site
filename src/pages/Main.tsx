@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Canvas, useFrame } from '@react-three/fiber'
 import type { Group } from 'three'
 import LowPolyRabbit from '../components/LowPolyRabbit'
-import './OG.css'
+import './Main.css'
 
 type Tab = 'home' | 'blog' | 'about' | 'music' | 'art' | 'contact'
 
@@ -629,7 +629,7 @@ function TabContent({ tab }: { tab: Tab }) {
   }
 }
 
-export default function OG() {
+export default function Main() {
   const [activeTab, setActiveTab] = useState<Tab>('home')
 
   return (

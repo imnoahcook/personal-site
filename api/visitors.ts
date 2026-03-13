@@ -1,8 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
-import { visitors } from '../src/db/schema'
 import { eq, sql } from 'drizzle-orm'
+import { visitors, createDb } from './_db'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!process.env.DATABASE_URL) {
@@ -10,8 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const client = postgres(process.env.DATABASE_URL, { prepare: false })
-  const db = drizzle(client)
+  const { client, db } = createDb()
 
   try {
     const page = (req.query.page ?? 'og') as string

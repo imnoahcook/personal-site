@@ -1,8 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
-import { posts } from '../src/db/schema'
 import { eq, sql } from 'drizzle-orm'
+import { posts, createDb } from './_db'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -15,8 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return
   }
 
-  const client = postgres(process.env.DATABASE_URL, { prepare: false })
-  const db = drizzle(client)
+  const { client, db } = createDb()
 
   try {
     const id = Number(req.query.id)

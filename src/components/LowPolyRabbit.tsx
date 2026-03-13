@@ -7,7 +7,7 @@ function Rabbit({ containerRef }: { containerRef: React.RefObject<HTMLDivElement
   const mouse = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
-    const onMove = (e: MouseEvent) => {
+    const onMove = (e: PointerEvent) => {
       const el = containerRef.current
       if (!el) return
       const rect = el.getBoundingClientRect()
@@ -16,8 +16,8 @@ function Rabbit({ containerRef }: { containerRef: React.RefObject<HTMLDivElement
       mouse.current.x = (e.clientX - cx) / (window.innerWidth / 2)
       mouse.current.y = -(e.clientY - cy) / (window.innerHeight / 2)
     }
-    window.addEventListener('mousemove', onMove)
-    return () => window.removeEventListener('mousemove', onMove)
+    window.addEventListener('pointermove', onMove)
+    return () => window.removeEventListener('pointermove', onMove)
   }, [containerRef])
 
   useFrame(() => {
@@ -156,8 +156,9 @@ export default function LowPolyRabbit() {
       >
         <Canvas
           camera={{ position: [0, 0, 4], fov: 40 }}
-          style={{ background: 'transparent' }}
+          style={{ background: 'transparent', pointerEvents: 'none' }}
           gl={{ alpha: true }}
+          events={() => ({ enabled: false, priority: 0, compute: () => {}, connected: undefined })}
         >
           <ambientLight intensity={0.6} />
           <directionalLight position={[3, 3, 5]} intensity={1} />

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import * as THREE from 'three'
+import { Canvas, useFrame } from '@react-three/fiber'
+import type { Group } from 'three'
 import LowPolyRabbit from '../components/LowPolyRabbit'
 import './OG.css'
 
@@ -88,89 +89,85 @@ function StarField() {
 }
 
 
+function SwordMesh() {
+  const groupRef = useRef<Group>(null)
+
+  useFrame(() => {
+    if (!groupRef.current) return
+    groupRef.current.position.y = Math.sin(Date.now() * 0.003) * 0.04
+  })
+
+  return (
+    <group ref={groupRef} rotation={[0.3, -0.4, 0.45]} position={[0, 0.1, 0]}>
+      {/* Blade */}
+      <mesh position={[0, 0.15, 0]}>
+        <boxGeometry args={[0.12, 1.1, 0.05]} />
+        <meshStandardMaterial color="#b8c8d8" flatShading />
+      </mesh>
+      {/* Tip */}
+      <mesh position={[0, 0.85, 0]}>
+        <coneGeometry args={[0.085, 0.3, 4]} />
+        <meshStandardMaterial color="#c8d8e8" flatShading />
+      </mesh>
+      {/* Crossguard */}
+      <mesh position={[0, -0.42, 0]}>
+        <boxGeometry args={[0.45, 0.07, 0.07]} />
+        <meshStandardMaterial color="#c8a030" flatShading />
+      </mesh>
+      {/* Handle */}
+      <mesh position={[0, -0.63, 0]}>
+        <cylinderGeometry args={[0.05, 0.05, 0.35, 5]} />
+        <meshStandardMaterial color="#5d3a1a" flatShading />
+      </mesh>
+      {/* Pommel */}
+      <mesh position={[0, -0.84, 0]}>
+        <sphereGeometry args={[0.07, 4, 3]} />
+        <meshStandardMaterial color="#c8a030" flatShading />
+      </mesh>
+    </group>
+  )
+}
+
 function SwordCursor() {
+  const ref = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    const size = 40
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
-    renderer.setSize(size, size)
-    renderer.setPixelRatio(1)
-    renderer.setClearColor(0x000000, 0)
-
-    const scene = new THREE.Scene()
-    const camera = new THREE.OrthographicCamera(-1.3, 1.3, 1.3, -1.3, 0.1, 10)
-    camera.position.set(1, 1, 5)
-    camera.lookAt(0, 0, 0)
-
-    const sword = new THREE.Group()
-
-    // Blade
-    const blade = new THREE.Mesh(
-      new THREE.BoxGeometry(0.12, 1.1, 0.05),
-      new THREE.MeshStandardMaterial({ color: '#b8c8d8', flatShading: true })
-    )
-    blade.position.y = 0.15
-    sword.add(blade)
-
-    // Blade tip
-    const tip = new THREE.Mesh(
-      new THREE.ConeGeometry(0.085, 0.3, 4),
-      new THREE.MeshStandardMaterial({ color: '#c8d8e8', flatShading: true })
-    )
-    tip.position.y = 0.85
-    sword.add(tip)
-
-    // Crossguard
-    const guard = new THREE.Mesh(
-      new THREE.BoxGeometry(0.45, 0.07, 0.07),
-      new THREE.MeshStandardMaterial({ color: '#c8a030', flatShading: true })
-    )
-    guard.position.y = -0.42
-    sword.add(guard)
-
-    // Handle
-    const handle = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.05, 0.05, 0.35, 5),
-      new THREE.MeshStandardMaterial({ color: '#5d3a1a', flatShading: true })
-    )
-    handle.position.y = -0.63
-    sword.add(handle)
-
-    // Pommel
-    const pommel = new THREE.Mesh(
-      new THREE.SphereGeometry(0.07, 4, 3),
-      new THREE.MeshStandardMaterial({ color: '#c8a030', flatShading: true })
-    )
-    pommel.position.y = -0.84
-    sword.add(pommel)
-
-    // Tilt so tip points upper-left (like a cursor)
-    sword.rotation.z = Math.PI / 5
-    sword.position.set(-0.15, 0.2, 0)
-
-    scene.add(sword)
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6))
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2)
-    dirLight.position.set(3, 4, 5)
-    scene.add(dirLight)
-
-    renderer.render(scene, camera)
-    const url = renderer.domElement.toDataURL('image/png')
-
-    const style = document.createElement('style')
-    style.textContent = `
-      .og-page { cursor: url(${url}) 2 2, default !important; }
-      .og-page a, .og-page button { cursor: url(${url}) 2 2, pointer !important; }
-    `
-    document.head.appendChild(style)
-
-    renderer.dispose()
-
-    return () => {
-      document.head.removeChild(style)
+    const el = ref.current
+    if (!el) return
+    el.style.display = 'none'
+    const onMove = (e: MouseEvent) => {
+      el.style.display = 'block'
+      el.style.transform = `translate(${e.clientX - 20}px, ${e.clientY - 8}px)`
     }
+    window.addEventListener('mousemove', onMove)
+    return () => window.removeEventListener('mousemove', onMove)
   }, [])
 
-  return null
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: 64,
+        height: 64,
+        pointerEvents: 'none',
+        zIndex: 9999,
+      }}
+    >
+      <Canvas
+        camera={{ position: [0, 0, 4], fov: 40 }}
+        gl={{ alpha: true }}
+        style={{ background: 'transparent' }}
+        events={() => ({ enabled: false, priority: 0, compute: () => {}, connected: undefined })}
+      >
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[3, 4, 5]} intensity={1.2} />
+        <SwordMesh />
+      </Canvas>
+    </div>
+  )
 }
 
 

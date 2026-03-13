@@ -403,9 +403,11 @@ function TabContent({ tab }: { tab: Tab }) {
             </p>
           </div>
           <Guestbook />
-          <div className="og-construction">
-            <span className="og-blink">{'>>> '}PAGE UNDER CONSTRUCTION{'  <<<'}</span>
-            <p>more stuff coming soon... probably... eventually...</p>
+          <div className="og-portal-section">
+            <p className="og-portal-text">the portal has opened, will you enter it?</p>
+            <a href="/portal" className="og-portal-link">
+              <img src="/og-icons/portal.gif" alt="portal" className="og-portal-img" />
+            </a>
           </div>
           <VisitorCounter />
         </>

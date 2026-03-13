@@ -8,6 +8,7 @@ import App from './App'
 import PhysicsPlayground from './pages/PhysicsPlayground'
 import Platformer from './pages/Platformer'
 import OG from './pages/OG'
+import Portal from './pages/Portal'
 
 const CONVERTED_KEY = 'og-converted'
 
@@ -39,6 +40,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/physics" element={<PhysicsPlayground />} />
           <Route path="/platformer" element={<Platformer />} />
           <Route path="/og" element={<OG />} />
+          <Route path="/portal" element={<Portal />} />
         </Route>
       </Routes>
     </BrowserRouter>

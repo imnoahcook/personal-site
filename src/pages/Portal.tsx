@@ -100,17 +100,13 @@ export default function Portal() {
         <div id="fp-geometry" ref={geometryRef}>
           <div className="fp-floor" />
 
-          {/* Room 1 - YouTube wall */}
+          {/* Room 1 */}
           <div className="fp-room" style={{ transform: 'translate3d(0, -200px, 0)' }}>
-            <div className="fp-wall fp-front">
-              <iframe
-                width="400"
-                height="315"
-                src="https://www.youtube.com/embed/_AWIqXzvX-U?si=u47HTThCcDCCYEmB&autoplay=1&controls=0"
-                title="YouTube video player"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              />
+            <div className="fp-wall fp-front" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <a href="/" style={{ color: '#91ebff', fontFamily: 'Courier New, monospace', fontSize: 20, textAlign: 'center', textDecoration: 'none' }}>
+                <img width="200" src={`${IMG}/spr/computer.gif`} alt="home" /><br />
+                home page
+              </a>
             </div>
             <div className="fp-wall fp-back" />
             <div className="fp-wall fp-left" />

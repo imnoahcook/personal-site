@@ -113,6 +113,56 @@ function VisitorCounter() {
   )
 }
 
+const BANNED_WORDS = [
+  // slurs
+  'nigger', 'nigga', 'nigg3r', 'n1gger', 'n1gga', 'n1gg3r', 'nig', 'n1g',
+  'faggot', 'fagg0t', 'f4ggot', 'f4gg0t', 'fag', 'f4g',
+  'retard', 'r3tard', 'retrd',
+  'tranny', 'tr4nny',
+  'kike', 'k1ke',
+  'chink', 'ch1nk',
+  'spic', 'sp1c',
+  'wetback', 'w3tback',
+  'beaner', 'b3aner',
+  'gook', 'g00k',
+  'coon', 'c00n',
+  'darkie', 'dark1e',
+  'jigaboo', 'jiggaboo',
+  'raghead', 'r4ghead',
+  'towelhead',
+  'zipperhead',
+  'cracker', 'cr4cker',
+  'honky', 'h0nky',
+  'gringo', 'gr1ngo',
+  'dyke', 'dyk3',
+  'lesbo', 'l3sbo',
+  // profanity
+  'fuck', 'fck', 'fuk', 'f_ck', 'f*ck', 'fu¢k', 'phuck', 'phuk',
+  'shit', 'sh1t', 'sht', 's#it', 'sh!t',
+  'bitch', 'b1tch', 'b!tch',
+  'cunt', 'c_nt', 'c*nt',
+  'dick', 'd1ck',
+  'cock', 'c0ck',
+  'pussy', 'puss1', 'pu$$y',
+  'ass', 'a$$',
+  'whore', 'wh0re', 'h0e', 'hoe',
+  'slut', 'sl_t',
+  // misc
+  'stfu', 'gtfo', 'kys',
+  'nazi', 'n4zi', 'naz1',
+  'hitler', 'h1tler',
+]
+
+function containsBannedWord(text: string): boolean {
+  const normalized = text.toLowerCase().replace(/[\s._\-*#!¢$@]+/g, '')
+  return BANNED_WORDS.some((word) => {
+    const normalizedWord = word.toLowerCase().replace(/[\s._\-*#!¢$@]+/g, '')
+    return normalized.includes(normalizedWord)
+  })
+}
+
+const BANNED_KEY = 'og-banned'
+
 const FAKE_ENTRIES: Post[] = [
   { id: -1, author: 'xX_c00lk1d_Xx', message: 'awesome site dude!! love the stars background', stars: 42, createdAt: '2006-08-14T00:00:00Z' },
   { id: -2, author: 'webmaster_jane', message: 'linked u on my webrings page. keep it real!', stars: 28, createdAt: '2006-07-22T00:00:00Z' },
@@ -124,6 +174,8 @@ function Guestbook() {
   const [starred, setStarred] = useState<Set<number>>(new Set())
   const [author, setAuthor] = useState('')
   const [message, setMessage] = useState('')
+  const [banned, setBanned] = useState(() => localStorage.getItem(BANNED_KEY) === 'true')
+  const [showBanModal, setShowBanModal] = useState(false)
 
   const { data: posts = [] } = useQuery<Post[]>({
     queryKey: ['posts'],
@@ -162,7 +214,14 @@ function Guestbook() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (banned) return
     if (!author.trim() || !message.trim() || createPost.isPending) return
+    if (containsBannedWord(author) || containsBannedWord(message)) {
+      localStorage.setItem(BANNED_KEY, 'true')
+      setBanned(true)
+      setShowBanModal(true)
+      return
+    }
     createPost.mutate({ author: author.trim(), message: message.trim() })
   }
 
@@ -198,28 +257,48 @@ function Guestbook() {
         })}
       </div>
 
-      <form className="og-gb-form" onSubmit={handleSubmit}>
-        <h2 className="og-heading">sign my guestbook!!</h2>
-        <input
-          className="og-gb-input"
-          type="text"
-          placeholder="your name (e.g. xX_h4ck3r_Xx)"
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          maxLength={50}
-        />
-        <textarea
-          className="og-gb-textarea"
-          placeholder="leave a message..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          maxLength={500}
-          rows={3}
-        />
-        <button className="og-gb-submit" type="submit" disabled={createPost.isPending}>
-          {createPost.isPending ? 'posting...' : '>> sign guestbook'}
-        </button>
-      </form>
+      {showBanModal && (
+        <div className="og-ban-overlay" onClick={() => setShowBanModal(false)}>
+          <div className="og-ban-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>BANNED</h2>
+            <p>you have been banned from the guestbook for using prohibited language.</p>
+            <p className="og-ban-skull">&#9760;</p>
+            <button className="og-ban-close" onClick={() => setShowBanModal(false)}>
+              ok i deserve this
+            </button>
+          </div>
+        </div>
+      )}
+
+      {banned ? (
+        <div className="og-gb-form">
+          <h2 className="og-heading">you are banned from the guestbook</h2>
+          <p className="og-text" style={{ fontStyle: 'italic' }}>maybe don&apos;t be rude next time &#9760;</p>
+        </div>
+      ) : (
+        <form className="og-gb-form" onSubmit={handleSubmit}>
+          <h2 className="og-heading">sign my guestbook!!</h2>
+          <input
+            className="og-gb-input"
+            type="text"
+            placeholder="your name (e.g. xX_h4ck3r_Xx)"
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            maxLength={50}
+          />
+          <textarea
+            className="og-gb-textarea"
+            placeholder="leave a message..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            maxLength={500}
+            rows={3}
+          />
+          <button className="og-gb-submit" type="submit" disabled={createPost.isPending}>
+            {createPost.isPending ? 'posting...' : '>> sign guestbook'}
+          </button>
+        </form>
+      )}
     </div>
   )
 }
@@ -386,9 +465,6 @@ function TabContent({ tab }: { tab: Tab }) {
                 </div>
               ))}
             </div>
-            <p className="og-text" style={{ marginTop: 16, fontStyle: 'italic' }}>
-              (imagine these are actual artworks and not gradient squares)
-            </p>
           </div>
         </>
       )

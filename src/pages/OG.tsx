@@ -565,12 +565,7 @@ export default function OG() {
 
       <div className="og-marquee-container">
         <div className="og-marquee">
-          <span>
-            {'★ '}hi! welcome to my corner of the internet{'  ★  '}
-            best viewed at 1024x768{'  ★  '}
-            you are visitor #{Math.floor(Math.random() * 9000) + 1337}{'  ★  '}
-            under construction since forever{'  ★  '}
-          </span>
+          <span>hi!</span>
         </div>
       </div>
 

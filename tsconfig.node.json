@@ -22,5 +22,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["vite.config.ts", "drizzle.config.ts", "api/**/*.ts"]
+  "include": ["vite.config.ts", "drizzle.config.ts", "api/**/*.ts"],
+  "exclude": ["public"]
 }

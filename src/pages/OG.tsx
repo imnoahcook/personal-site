@@ -241,7 +241,6 @@ function Guestbook() {
         {allPosts.map((post) => {
           const date = new Date(post.createdAt)
           const dateStr = `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}/${date.getFullYear()}`
-          const isFake = post.id < 0
           return (
             <div key={post.id} className="og-guestbook-entry">
               <div className="og-gb-header">

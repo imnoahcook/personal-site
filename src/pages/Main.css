@@ -83,12 +83,11 @@
 
 .og-marquee span {
   display: inline-block;
-  padding-right: 100vw;
 }
 
 @keyframes og-scroll {
   0% { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
+  100% { transform: translateX(-50%); }
 }
 
 /* Main layout */

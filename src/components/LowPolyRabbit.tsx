@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -107,14 +107,38 @@ function Rabbit({ containerRef }: { containerRef: React.RefObject<HTMLDivElement
   )
 }
 
+const DEFAULT_BUBBLE = "hi i'm the rabbit. this is my site now."
+
+const QUIPS: Record<string, string[]> = {
+  click: ['hey!', 'ow!', 'stop', 'what?', 'sup', 'boop', 'rude', 'hi!', 'no'],
+  tab: ['ooh', 'nice', 'hmm', 'cool', 'why?', 'ok', 'neat', 'ugh'],
+  comment: ['wow', 'deep', 'lol', 'nice one', 'bold', 'heh', 'bravo', 'true'],
+}
+
+function pick(arr: string[]): string {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
 export default function LowPolyRabbit() {
   const containerRef = useRef<HTMLDivElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const dragging = useRef(false)
+  const didDrag = useRef(false)
   const offset = useRef({ x: 0, y: 0 })
+  const [bubble, setBubble] = useState(DEFAULT_BUBBLE)
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
+
+  const showQuip = useCallback((category: string) => {
+    const quips = QUIPS[category]
+    if (!quips) return
+    if (timerRef.current) clearTimeout(timerRef.current)
+    setBubble(pick(quips))
+    timerRef.current = setTimeout(() => setBubble(DEFAULT_BUBBLE), 2500)
+  }, [])
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     dragging.current = true
+    didDrag.current = false
     const rect = wrapperRef.current!.getBoundingClientRect()
     offset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
     wrapperRef.current!.setPointerCapture(e.pointerId)
@@ -126,12 +150,16 @@ export default function LowPolyRabbit() {
 
     const onPointerMove = (e: PointerEvent) => {
       if (!dragging.current) return
+      didDrag.current = true
       el.style.left = e.clientX - offset.current.x + 'px'
       el.style.top = e.clientY - offset.current.y + 'px'
       el.style.right = 'auto'
       el.style.bottom = 'auto'
     }
     const onPointerUp = () => {
+      if (dragging.current && !didDrag.current) {
+        showQuip('click')
+      }
       dragging.current = false
     }
 
@@ -141,7 +169,17 @@ export default function LowPolyRabbit() {
       el.removeEventListener('pointermove', onPointerMove)
       el.removeEventListener('pointerup', onPointerUp)
     }
-  }, [])
+  }, [showQuip])
+
+  // Listen for quip events from the rest of the page
+  useEffect(() => {
+    const onQuip = (e: Event) => {
+      const category = (e as CustomEvent).detail
+      if (typeof category === 'string') showQuip(category)
+    }
+    window.addEventListener('rabbit-quip', onQuip)
+    return () => window.removeEventListener('rabbit-quip', onQuip)
+  }, [showQuip])
 
   return (
     <div
@@ -149,7 +187,7 @@ export default function LowPolyRabbit() {
       className="og-rabbit-container"
       onPointerDown={onPointerDown}
     >
-      <div className="og-rabbit-bubble">hi i&apos;m the rabbit. this is my site now.</div>
+      <div className="og-rabbit-bubble">{bubble}</div>
       <div
         ref={containerRef}
         className="og-rabbit"

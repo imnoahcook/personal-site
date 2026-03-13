@@ -253,6 +253,7 @@ function Guestbook() {
       return
     }
     createPost.mutate({ author: author.trim(), message: message.trim() })
+    window.dispatchEvent(new CustomEvent('rabbit-quip', { detail: 'comment' }))
   }
 
   const allPosts = [...posts, ...FAKE_ENTRIES]
@@ -589,7 +590,8 @@ export default function Main() {
 
       <div className="og-marquee-container">
         <div className="og-marquee">
-          <span>hi!</span>
+          <span>hi!&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span>hi!&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
         </div>
       </div>
 
@@ -599,7 +601,10 @@ export default function Main() {
           {sidebarLinks.map((link) => (
             <button
               key={link.label}
-              onClick={() => setActiveTab(link.label)}
+              onClick={() => {
+                setActiveTab(link.label)
+                window.dispatchEvent(new CustomEvent('rabbit-quip', { detail: 'tab' }))
+              }}
               className={`og-sidebar-link${activeTab === link.label ? ' og-sidebar-active' : ''}`}
             >
               <img src={link.icon} alt={link.label} className="og-sidebar-icon" />

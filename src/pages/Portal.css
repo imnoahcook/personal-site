@@ -1,0 +1,123 @@
+.fp-page {
+  margin: 0;
+  overflow: hidden;
+  background-color: black;
+  color: white;
+  background-image: url("/fp-img/spacewithstars.gif");
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 200;
+}
+
+#fp-scene {
+  perspective: 800px;
+  perspective-origin: 50% 50%;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  transform-style: preserve-3d;
+}
+
+.fp-group {
+  transform-style: preserve-3d;
+}
+
+.fp-clickable {
+  cursor: pointer;
+}
+
+#fp-geometry {
+  position: relative;
+  transform-style: preserve-3d;
+  transform-origin: 500px 0px 0px;
+}
+
+.fp-room {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  transform-style: preserve-3d;
+}
+
+.fp-wall {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  box-sizing: border-box;
+  background-color: blue;
+  background: url("/fp-img/spr/brick.JPG");
+}
+
+.fp-emptyplane {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  box-sizing: border-box;
+}
+
+.fp-building {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  box-sizing: border-box;
+  background-color: blue;
+  background: url("/fp-img/spr/BUILD202.png");
+  background-size: cover;
+}
+
+.fp-tree1 {
+  position: absolute;
+  width: 220px;
+  height: 400px;
+  box-sizing: border-box;
+  background-color: blue;
+  background: url("/fp-img/spr/cc301003.png");
+}
+
+.fp-tree2 {
+  position: absolute;
+  width: 1200px;
+  height: 500px;
+  box-sizing: border-box;
+  background-color: blue;
+  background: url("/fp-img/spr/cc038006.png");
+}
+
+.fp-wallMedium {
+  position: absolute;
+  width: 1000px;
+  height: 400px;
+  box-sizing: border-box;
+  background-color: blue;
+  background: url("/fp-img/spr/ROCK07.png");
+}
+
+.fp-wallLong {
+  position: absolute;
+  width: 3200px;
+  height: 400px;
+  box-sizing: border-box;
+  background-color: blue;
+  background: url("/fp-img/spr/brick.JPG");
+}
+
+.fp-floor {
+  position: absolute;
+  width: 3200px;
+  height: 3200px;
+  box-sizing: border-box;
+  background-color: blue;
+  background: url("/fp-img/spr/floor.JPG");
+  transform: rotateX(90deg) translateY(400px) translateX(-800px) translateZ(1400px);
+}
+
+.fp-front { transform: translateZ(200px); }
+.fp-back { transform: rotateY(180deg) translateZ(200px); }
+.fp-left { transform: rotateY(-90deg) translateZ(200px); }
+.fp-right { transform: rotateY(90deg) translateZ(200px); }

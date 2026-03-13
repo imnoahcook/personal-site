@@ -98,31 +98,26 @@ function SwordMesh() {
   })
 
   return (
-    <group ref={groupRef} rotation={[0.3, -0.4, 0.45]} position={[0, 0.1, 0]}>
-      {/* Blade */}
-      <mesh position={[0, 0.15, 0]}>
-        <boxGeometry args={[0.12, 1.1, 0.05]} />
-        <meshStandardMaterial color="#b8c8d8" flatShading />
+    <group ref={groupRef} rotation={[0.3, -0.5, 0.45]} position={[0, 0.05, 0]}>
+      {/* Diamond blade — octahedron stretched tall and thin */}
+      <mesh position={[0, 0.35, 0]} scale={[0.18, 0.9, 0.08]}>
+        <octahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color="#d8e8f0" flatShading />
       </mesh>
-      {/* Tip */}
-      <mesh position={[0, 0.85, 0]}>
-        <coneGeometry args={[0.085, 0.3, 4]} />
-        <meshStandardMaterial color="#c8d8e8" flatShading />
+      {/* Crossguard — flat diamond */}
+      <mesh position={[0, -0.5, 0]} rotation={[0, 0, Math.PI / 4]} scale={[0.22, 0.22, 0.1]}>
+        <octahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color="#e8c840" flatShading />
       </mesh>
-      {/* Crossguard */}
-      <mesh position={[0, -0.42, 0]}>
-        <boxGeometry args={[0.45, 0.07, 0.07]} />
-        <meshStandardMaterial color="#c8a030" flatShading />
+      {/* Handle — chunky box */}
+      <mesh position={[0, -0.75, 0]}>
+        <boxGeometry args={[0.09, 0.3, 0.09]} />
+        <meshStandardMaterial color="#a06830" flatShading />
       </mesh>
-      {/* Handle */}
-      <mesh position={[0, -0.63, 0]}>
-        <cylinderGeometry args={[0.05, 0.05, 0.35, 5]} />
-        <meshStandardMaterial color="#5d3a1a" flatShading />
-      </mesh>
-      {/* Pommel */}
-      <mesh position={[0, -0.84, 0]}>
-        <sphereGeometry args={[0.07, 4, 3]} />
-        <meshStandardMaterial color="#c8a030" flatShading />
+      {/* Pommel — tetrahedron */}
+      <mesh position={[0, -0.94, 0]} scale={[0.8, 0.8, 0.8]}>
+        <tetrahedronGeometry args={[0.08, 0]} />
+        <meshStandardMaterial color="#e8c840" flatShading />
       </mesh>
     </group>
   )
@@ -162,8 +157,9 @@ function SwordCursor() {
         style={{ background: 'transparent' }}
         events={() => ({ enabled: false, priority: 0, compute: () => {}, connected: undefined })}
       >
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[3, 4, 5]} intensity={1.2} />
+        <ambientLight intensity={0.9} />
+        <directionalLight position={[3, 4, 5]} intensity={1.5} />
+        <directionalLight position={[-2, -1, 3]} intensity={0.5} />
         <SwordMesh />
       </Canvas>
     </div>

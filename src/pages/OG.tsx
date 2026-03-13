@@ -559,9 +559,18 @@ export default function OG() {
     <div className="og-page">
       <StarField />
 
+      <div className="og-wordart-container">
+        <h1 className="og-wordart">Noah Cook</h1>
+      </div>
+
       <div className="og-marquee-container">
         <div className="og-marquee">
-          <span>hi</span>
+          <span>
+            {'★ '}hi! welcome to my corner of the internet{'  ★  '}
+            best viewed at 1024x768{'  ★  '}
+            you are visitor #{Math.floor(Math.random() * 9000) + 1337}{'  ★  '}
+            under construction since forever{'  ★  '}
+          </span>
         </div>
       </div>
 

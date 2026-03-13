@@ -21,6 +21,41 @@
   pointer-events: none;
 }
 
+/* WordArt title */
+.og-wordart-container {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 20px 0 10px 0;
+}
+
+.og-wordart {
+  font-family: 'Impact', 'Arial Black', sans-serif;
+  font-size: clamp(48px, 8vw, 80px);
+  font-weight: 900;
+  letter-spacing: 4px;
+  background: linear-gradient(
+    180deg,
+    #ff0000 0%,
+    #ff8800 15%,
+    #ffff00 30%,
+    #00ff00 45%,
+    #0088ff 60%,
+    #4400ff 75%,
+    #ff00ff 90%,
+    #ff0000 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.3);
+  filter: drop-shadow(2px 2px 0 #000) drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.5));
+  text-transform: uppercase;
+  transform: scaleY(1.3) perspective(300px) rotateX(8deg);
+  margin: 0;
+  line-height: 1;
+}
+
 /* Marquee banner */
 .og-marquee-container {
   position: relative;

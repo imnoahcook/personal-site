@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import * as THREE from 'three'
 import LowPolyRabbit from '../components/LowPolyRabbit'
 import './OG.css'
 
@@ -84,6 +85,92 @@ function StarField() {
   }, [])
 
   return <canvas ref={canvasRef} className="og-starfield" />
+}
+
+
+function SwordCursor() {
+  useEffect(() => {
+    const size = 40
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
+    renderer.setSize(size, size)
+    renderer.setPixelRatio(1)
+    renderer.setClearColor(0x000000, 0)
+
+    const scene = new THREE.Scene()
+    const camera = new THREE.OrthographicCamera(-1.3, 1.3, 1.3, -1.3, 0.1, 10)
+    camera.position.set(1, 1, 5)
+    camera.lookAt(0, 0, 0)
+
+    const sword = new THREE.Group()
+
+    // Blade
+    const blade = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 1.1, 0.05),
+      new THREE.MeshStandardMaterial({ color: '#b8c8d8', flatShading: true })
+    )
+    blade.position.y = 0.15
+    sword.add(blade)
+
+    // Blade tip
+    const tip = new THREE.Mesh(
+      new THREE.ConeGeometry(0.085, 0.3, 4),
+      new THREE.MeshStandardMaterial({ color: '#c8d8e8', flatShading: true })
+    )
+    tip.position.y = 0.85
+    sword.add(tip)
+
+    // Crossguard
+    const guard = new THREE.Mesh(
+      new THREE.BoxGeometry(0.45, 0.07, 0.07),
+      new THREE.MeshStandardMaterial({ color: '#c8a030', flatShading: true })
+    )
+    guard.position.y = -0.42
+    sword.add(guard)
+
+    // Handle
+    const handle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.05, 0.35, 5),
+      new THREE.MeshStandardMaterial({ color: '#5d3a1a', flatShading: true })
+    )
+    handle.position.y = -0.63
+    sword.add(handle)
+
+    // Pommel
+    const pommel = new THREE.Mesh(
+      new THREE.SphereGeometry(0.07, 4, 3),
+      new THREE.MeshStandardMaterial({ color: '#c8a030', flatShading: true })
+    )
+    pommel.position.y = -0.84
+    sword.add(pommel)
+
+    // Tilt so tip points upper-left (like a cursor)
+    sword.rotation.z = Math.PI / 5
+    sword.position.set(-0.15, 0.2, 0)
+
+    scene.add(sword)
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6))
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2)
+    dirLight.position.set(3, 4, 5)
+    scene.add(dirLight)
+
+    renderer.render(scene, camera)
+    const url = renderer.domElement.toDataURL('image/png')
+
+    const style = document.createElement('style')
+    style.textContent = `
+      .og-page { cursor: url(${url}) 2 2, default !important; }
+      .og-page a, .og-page button { cursor: url(${url}) 2 2, pointer !important; }
+    `
+    document.head.appendChild(style)
+
+    renderer.dispose()
+
+    return () => {
+      document.head.removeChild(style)
+    }
+  }, [])
+
+  return null
 }
 
 
@@ -176,7 +263,7 @@ function Guestbook() {
   const [message, setMessage] = useState('')
   const [banned, setBanned] = useState(() => localStorage.getItem(BANNED_KEY) === 'true')
   const [showBanModal, setShowBanModal] = useState(false)
-  const pendingStarsRef = useRef<Set<number>>(new Set())
+  const firedStarsRef = useRef<Set<number>>(new Set())
 
   const { data: posts = [] } = useQuery<Post[]>({
     queryKey: ['posts'],
@@ -197,37 +284,19 @@ function Guestbook() {
     },
   })
 
-  // Keep pending stars ref in sync (only real post IDs)
-  useEffect(() => {
-    pendingStarsRef.current = new Set([...starred].filter((id) => id > 0))
-  }, [starred])
-
-  // Flush pending stars to server on page leave
-  useEffect(() => {
-    const flush = () => {
-      for (const id of pendingStarsRef.current) {
-        navigator.sendBeacon(`/api/stars?id=${id}`)
-      }
-      pendingStarsRef.current.clear()
-    }
-    window.addEventListener('beforeunload', flush)
-    window.addEventListener('pagehide', flush)
-    return () => {
-      window.removeEventListener('beforeunload', flush)
-      window.removeEventListener('pagehide', flush)
-    }
-  }, [])
-
   const handleStar = (id: number) => {
+    const willStar = !starred.has(id)
     setStarred((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
+      if (willStar) next.add(id)
+      else next.delete(id)
       return next
     })
+    // Fire API at most once per session per real post
+    if (willStar && id > 0 && !firedStarsRef.current.has(id)) {
+      firedStarsRef.current.add(id)
+      fetch(`/api/stars?id=${id}`, { method: 'POST' })
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -569,6 +638,7 @@ export default function OG() {
   return (
     <div className="og-page">
       <StarField />
+      <SwordCursor />
 
       <div className="og-wordart-container">
         <h1 className="og-wordart">Noah Cook</h1>

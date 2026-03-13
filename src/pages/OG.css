@@ -8,12 +8,11 @@
   font-family: 'Times New Roman', 'Georgia', serif;
   color: #e0e0e0;
   padding-top: 60px; /* space for site nav */
-  cursor: url('/og-icons/sword.png') 0 0, default;
 }
 
 .og-page a,
 .og-page button {
-  cursor: url('/og-icons/sword.png') 0 0, pointer;
+  cursor: pointer;
 }
 
 /* Starfield canvas */

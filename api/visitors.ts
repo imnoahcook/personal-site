@@ -37,17 +37,6 @@ const visitedUids = pgTable('visited_uids', {
   primaryKey({ columns: [table.uid, table.page] }),
 ])
 
-async function ensureTable(db: ReturnType<typeof drizzle>) {
-  await db.execute(sql`
-    CREATE TABLE IF NOT EXISTS visited_uids (
-      uid TEXT NOT NULL,
-      page TEXT NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-      PRIMARY KEY (uid, page)
-    )
-  `)
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!process.env.DATABASE_URL) {
     res.status(500).json({ error: 'DATABASE_URL not set' })
@@ -63,7 +52,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'POST') {
       if (rateLimit(req, res, 10)) return
 
-      await ensureTable(db)
       const uid = getUid(req)
 
       if (uid) {

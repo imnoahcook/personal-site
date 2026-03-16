@@ -46,18 +46,6 @@ const users = pgTable('users', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
-async function ensureUsersTable(db: ReturnType<typeof drizzle>) {
-  await db.execute(sql`
-    CREATE TABLE IF NOT EXISTS users (
-      uid TEXT PRIMARY KEY,
-      aliases TEXT[] DEFAULT '{}',
-      banned BOOLEAN DEFAULT FALSE,
-      banned_at TIMESTAMPTZ,
-      created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
-    )
-  `)
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!process.env.DATABASE_URL) {
     res.status(500).json({ error: 'DATABASE_URL not set' })
@@ -72,8 +60,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (rateLimit(req, res)) return
 
       const uid = getUid(req)
-
-      await ensureUsersTable(db)
 
       if (uid) {
         const userRows = await db

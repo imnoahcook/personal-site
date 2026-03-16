@@ -39,17 +39,6 @@ const userStars = pgTable('user_stars', {
   primaryKey({ columns: [table.uid, table.postId] }),
 ])
 
-async function ensureTable(db: ReturnType<typeof drizzle>) {
-  await db.execute(sql`
-    CREATE TABLE IF NOT EXISTS user_stars (
-      uid TEXT NOT NULL,
-      post_id INTEGER NOT NULL REFERENCES posts(id),
-      created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-      PRIMARY KEY (uid, post_id)
-    )
-  `)
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (rateLimit(req, res)) return
 
@@ -62,7 +51,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const db = drizzle(client)
 
   try {
-    await ensureTable(db)
     const uid = getUid(req)
 
     if (req.method === 'GET') {

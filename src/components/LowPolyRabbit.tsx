@@ -136,12 +136,25 @@ export default function LowPolyRabbit() {
     timerRef.current = setTimeout(() => setBubble(DEFAULT_BUBBLE), 2500)
   }, [])
 
+  const pos = useRef({ x: 0, y: 0 })
+  const hasBeenDragged = useRef(false)
+
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     dragging.current = true
     didDrag.current = false
-    const rect = wrapperRef.current!.getBoundingClientRect()
-    offset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
-    wrapperRef.current!.setPointerCapture(e.pointerId)
+    const el = wrapperRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    if (!hasBeenDragged.current) {
+      pos.current = { x: rect.left, y: rect.top }
+      hasBeenDragged.current = true
+      el.style.right = 'auto'
+      el.style.bottom = 'auto'
+      el.style.left = '0px'
+      el.style.top = '0px'
+    }
+    offset.current = { x: e.clientX - pos.current.x, y: e.clientY - pos.current.y }
+    el.setPointerCapture(e.pointerId)
   }, [])
 
   useEffect(() => {
@@ -151,10 +164,8 @@ export default function LowPolyRabbit() {
     const onPointerMove = (e: PointerEvent) => {
       if (!dragging.current) return
       didDrag.current = true
-      el.style.left = e.clientX - offset.current.x + 'px'
-      el.style.top = e.clientY - offset.current.y + 'px'
-      el.style.right = 'auto'
-      el.style.bottom = 'auto'
+      pos.current = { x: e.clientX - offset.current.x, y: e.clientY - offset.current.y }
+      el.style.transform = `translate(${pos.current.x}px, ${pos.current.y}px)`
     }
     const onPointerUp = () => {
       if (dragging.current && !didDrag.current) {

@@ -1,19 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-// import { Canvas, useFrame } from '@react-three/fiber'
-// import type { Group } from 'three'
 import LowPolyRabbit from '../components/LowPolyRabbit'
 import './Main.css'
 
 type Tab = 'home' | 'blog' | 'about' | 'music' | 'art' | 'contact'
 
 const sidebarLinks: { icon: string; label: Tab }[] = [
-  { icon: '/og-icons/house.gif', label: 'home' },
-  { icon: '/og-icons/world.gif', label: 'blog' },
-  { icon: '/og-icons/question2.gif', label: 'about' },
-  { icon: '/og-icons/spinningcd.gif', label: 'music' },
-  { icon: '/og-icons/art.gif', label: 'art' },
-  { icon: '/og-icons/ampersat.gif', label: 'contact' },
+  { icon: '/icons/house.gif', label: 'home' },
+  { icon: '/icons/world.gif', label: 'blog' },
+  { icon: '/icons/question2.gif', label: 'about' },
+  { icon: '/icons/spinningcd.gif', label: 'music' },
+  { icon: '/icons/art.gif', label: 'art' },
+  { icon: '/icons/ampersat.gif', label: 'contact' },
 ]
 
 interface Post {
@@ -34,143 +32,8 @@ function countryFlag(code: string): string {
 }
 
 function StarField() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
-    const colors = [
-      [255, 255, 255],   // white
-      [200, 180, 255],   // lavender
-      [255, 150, 200],   // pink
-      [150, 200, 255],   // light blue
-      [180, 130, 255],   // purple
-      [255, 200, 230],   // soft pink
-      [145, 235, 255],   // teal
-    ]
-
-    const stars = Array.from({ length: 300 }, () => {
-      const color = colors[Math.floor(Math.random() * colors.length)]
-      return {
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 2.5 + 0.3,
-        speed: Math.random() * 0.3 + 0.05,
-        brightness: Math.random() * 0.7 + 0.3,
-        phase: Math.random() * Math.PI * 2,
-        r: color[0],
-        g: color[1],
-        b: color[2],
-      }
-    })
-
-    let animId: number
-    const draw = (time: number) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      for (const star of stars) {
-        const twinkle = 0.4 + 0.6 * Math.sin(time * 0.001 * star.speed + star.phase)
-        ctx.fillStyle = `rgba(${star.r}, ${star.g}, ${star.b}, ${twinkle * star.brightness})`
-        ctx.beginPath()
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2)
-        ctx.fill()
-      }
-      animId = requestAnimationFrame(draw)
-    }
-    animId = requestAnimationFrame(draw)
-
-    return () => {
-      cancelAnimationFrame(animId)
-      window.removeEventListener('resize', resize)
-    }
-  }, [])
-
-  return <canvas ref={canvasRef} className="og-starfield" />
+  return <div className="starfield" />
 }
-
-
-// function SwordMesh() {
-//   const groupRef = useRef<Group>(null)
-//
-//   useFrame(() => {
-//     if (!groupRef.current) return
-//     groupRef.current.position.y = Math.sin(Date.now() * 0.003) * 0.04
-//   })
-//
-//   return (
-//     <group ref={groupRef} rotation={[0.3, -0.5, 0.45]} position={[0, 0.05, 0]}>
-//       <mesh position={[0, 0.35, 0]} scale={[0.18, 0.9, 0.08]}>
-//         <octahedronGeometry args={[1, 0]} />
-//         <meshStandardMaterial color="#d8e8f0" flatShading />
-//       </mesh>
-//       <mesh position={[0, -0.5, 0]} rotation={[0, 0, Math.PI / 4]} scale={[0.22, 0.22, 0.1]}>
-//         <octahedronGeometry args={[1, 0]} />
-//         <meshStandardMaterial color="#e8c840" flatShading />
-//       </mesh>
-//       <mesh position={[0, -0.75, 0]}>
-//         <boxGeometry args={[0.09, 0.3, 0.09]} />
-//         <meshStandardMaterial color="#a06830" flatShading />
-//       </mesh>
-//       <mesh position={[0, -0.94, 0]} scale={[0.8, 0.8, 0.8]}>
-//         <tetrahedronGeometry args={[0.08, 0]} />
-//         <meshStandardMaterial color="#e8c840" flatShading />
-//       </mesh>
-//     </group>
-//   )
-// }
-//
-// function SwordCursor() {
-//   const ref = useRef<HTMLDivElement>(null)
-//
-//   useEffect(() => {
-//     const el = ref.current
-//     if (!el) return
-//     el.style.display = 'none'
-//     const onMove = (e: MouseEvent) => {
-//       el.style.display = 'block'
-//       el.style.transform = `translate(${e.clientX - 55}px, ${e.clientY - 20}px)`
-//     }
-//     window.addEventListener('mousemove', onMove)
-//     return () => window.removeEventListener('mousemove', onMove)
-//   }, [])
-//
-//   return (
-//     <div
-//       ref={ref}
-//       style={{
-//         position: 'fixed',
-//         top: 0,
-//         left: 0,
-//         width: 192,
-//         height: 192,
-//         pointerEvents: 'none',
-//         zIndex: 9999,
-//       }}
-//     >
-//       <Canvas
-//         camera={{ position: [0, 0, 4], fov: 40 }}
-//         gl={{ alpha: true }}
-//         style={{ background: 'transparent' }}
-//         events={() => ({ enabled: false, priority: 0, compute: () => {}, connected: undefined })}
-//       >
-//         <ambientLight intensity={0.9} />
-//         <directionalLight position={[3, 4, 5]} intensity={1.5} />
-//         <directionalLight position={[-2, -1, 3]} intensity={0.5} />
-//         <SwordMesh />
-//       </Canvas>
-//     </div>
-//   )
-// }
-
 
 function VisitorCounter() {
   const hasFired = useRef(false)
@@ -187,11 +50,11 @@ function VisitorCounter() {
 
   const display = increment.data?.count ?? 0
   return (
-    <div className="og-visitor-counter">
-      <span className="og-counter-label">visitors:</span>
-      <span className="og-counter-digits">
+    <div className="visitor-counter">
+      <span className="counter-label">visitors:</span>
+      <span className="counter-digits">
         {String(display).padStart(6, '0').split('').map((d: string, i: number) => (
-          <span key={i} className="og-counter-digit">{d}</span>
+          <span key={i} className="counter-digit">{d}</span>
         ))}
       </span>
     </div>
@@ -200,8 +63,7 @@ function VisitorCounter() {
 
 import { containsBannedWord } from '../bannedWords'
 
-const BANNED_KEY = 'og-banned-v2'
-
+const BANNED_KEY = 'banned'
 
 function Guestbook() {
   const queryClient = useQueryClient()
@@ -244,7 +106,6 @@ function Guestbook() {
       else next.delete(id)
       return next
     })
-    // Fire API at most once per session per real post
     if (willStar && !firedStarsRef.current.has(id)) {
       firedStarsRef.current.add(id)
       fetch(`/api/stars?id=${id}`, { method: 'POST' })
@@ -268,23 +129,23 @@ function Guestbook() {
   const allPosts = posts
 
   return (
-    <div className="og-section">
-      <h2 className="og-heading">guestbook</h2>
-      <div className="og-guestbook">
+    <div className="section">
+      <h2 className="heading">guestbook</h2>
+      <div className="guestbook">
         {allPosts.map((post) => {
           const date = new Date(post.createdAt)
           const dateStr = `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}/${date.getFullYear()}`
           return (
-            <div key={post.id} className="og-guestbook-entry">
-              <div className="og-gb-header">
+            <div key={post.id} className="guestbook-entry">
+              <div className="gb-header">
                 <span>
-                  <span className="og-gb-name">{post.author} {countryFlag(post.country)}</span>
-                  <span className="og-gb-date">{dateStr}</span>
+                  <span className="gb-name">{post.author} {countryFlag(post.country)}</span>
+                  <span className="gb-date">{dateStr}</span>
                 </span>
                 <button
-                  className={`og-star-btn${starred.has(post.id) ? ' og-starred' : ''}`}
+                  className={`star-btn${starred.has(post.id) ? ' starred' : ''}`}
                   onClick={() => handleStar(post.id)}
-                  title={starred.has(post.id) ? 'click to unstar' : 'give a star'}
+                  aria-label={`${starred.has(post.id) ? 'Unstar' : 'Star'} post by ${post.author}, ${post.stars + (starred.has(post.id) ? 1 : 0)} stars`}
                 >
                   {starred.has(post.id) ? '\u2605' : '\u2606'} {post.stars + (starred.has(post.id) ? 1 : 0)}
                 </button>
@@ -296,12 +157,12 @@ function Guestbook() {
       </div>
 
       {showBanModal && (
-        <div className="og-ban-overlay" onClick={() => setShowBanModal(false)}>
-          <div className="og-ban-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="ban-overlay" onClick={() => setShowBanModal(false)} role="dialog" aria-modal="true" aria-label="Banned notice">
+          <div className="ban-modal" onClick={(e) => e.stopPropagation()}>
             <h2>BANNED</h2>
             <p>you have been banned from the guestbook for using prohibited language.</p>
-            <p className="og-ban-skull">&#9760;</p>
-            <button className="og-ban-close" onClick={() => setShowBanModal(false)}>
+            <p className="ban-skull">&#9760;</p>
+            <button className="ban-close" onClick={() => setShowBanModal(false)}>
               ok i deserve this
             </button>
           </div>
@@ -309,31 +170,37 @@ function Guestbook() {
       )}
 
       {banned ? (
-        <div className="og-gb-form">
-          <h2 className="og-heading">you are banned from the guestbook</h2>
-          <p className="og-text" style={{ fontStyle: 'italic' }}>maybe don&apos;t be rude next time &#9760;</p>
+        <div className="gb-form">
+          <h2 className="heading">you are banned from the guestbook</h2>
+          <p className="text" style={{ fontStyle: 'italic' }}>maybe don&apos;t be rude next time &#9760;</p>
         </div>
       ) : (
-        <form className="og-gb-form" onSubmit={handleSubmit}>
-          <h2 className="og-heading">sign my guestbook!!</h2>
-          <p className="og-text" style={{ marginBottom: 12 }}>this may be the only chance we will know each other on this tiny blue dot. say something</p>
+        <form className="gb-form" onSubmit={handleSubmit}>
+          <h2 className="heading">sign my guestbook!!</h2>
+          <p className="text" style={{ marginBottom: 12 }}>this may be the only chance we will know each other on this tiny blue dot. say something</p>
+          <label htmlFor="gb-author" className="sr-only">Your name</label>
           <input
-            className="og-gb-input"
+            id="gb-author"
+            className="gb-input"
             type="text"
             placeholder="your name (e.g. xX_h4ck3r_Xx)"
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
             maxLength={50}
+            aria-label="Your name"
           />
+          <label htmlFor="gb-message" className="sr-only">Your message</label>
           <textarea
-            className="og-gb-textarea"
+            id="gb-message"
+            className="gb-textarea"
             placeholder="leave a message..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             maxLength={500}
             rows={3}
+            aria-label="Your message"
           />
-          <button className="og-gb-submit" type="submit" disabled={createPost.isPending}>
+          <button className="gb-submit" type="submit" disabled={createPost.isPending}>
             {createPost.isPending ? 'posting...' : `>> sign guestbook ${myCountry ? countryFlag(myCountry) : ''}`}
           </button>
         </form>
@@ -406,16 +273,17 @@ function RetroPiano() {
   }, [playNote])
 
   return (
-    <div className="og-piano-wrapper">
-      <div className="og-piano-label">~ click or use keyboard (A-K) ~</div>
-      <div className="og-piano">
+    <div className="piano-wrapper">
+      <div className="piano-label">~ click or use keyboard (A-K) ~</div>
+      <div className="piano" role="group" aria-label="Piano keyboard">
         {PIANO_KEYS.map((key, i) => (
           <button
-            key={key.note}
-            className={`og-piano-key ${key.black ? 'og-piano-black' : 'og-piano-white'} ${activeKeys.has(i) ? 'og-piano-active' : ''}`}
+            key={i}
+            className={`piano-key ${key.black ? 'piano-black' : 'piano-white'} ${activeKeys.has(i) ? 'piano-active' : ''}`}
             onMouseDown={() => playNote(key.freq, i)}
+            aria-label={`Play note ${key.note}`}
           >
-            <span className="og-piano-note">{key.note}</span>
+            <span className="piano-note">{key.note}</span>
           </button>
         ))}
       </div>
@@ -460,10 +328,10 @@ function ScaredPortal() {
 
   if (opened) {
     return (
-      <div className="og-portal-section">
-        <p className="og-portal-text">the portal has opened, will you enter it?</p>
-        <a href="/portal" className="og-portal-link">
-          <img src="/og-icons/portal.gif" alt="portal" className="og-portal-img" />
+      <div className="portal-section">
+        <p className="portal-text">the portal has opened, will you enter it?</p>
+        <a href="/portal" className="portal-link">
+          <img src="/icons/portal.gif" alt="portal" className="portal-img" />
         </a>
       </div>
     )
@@ -472,13 +340,13 @@ function ScaredPortal() {
   return (
     <div
       ref={containerRef}
-      className="og-portal-section og-portal-scared"
+      className="portal-section portal-scared"
       onPointerMove={onPointerMove}
     >
-      <p className="og-portal-text">do you want to open the portal?</p>
+      <p className="portal-text">do you want to open the portal?</p>
       <button
         ref={btnRef}
-        className="og-portal-scared-btn"
+        className="portal-scared-btn"
         onClick={() => setOpened(true)}
       >
         open it
@@ -492,9 +360,9 @@ function TabContent({ tab }: { tab: Tab }) {
     case 'home':
       return (
         <>
-          <h1 className="og-title">welcome to my site</h1>
-          <div className="og-section">
-            <p className="og-text">
+          <h1 className="title">welcome to my site</h1>
+          <div className="section">
+            <p className="text">
               this website is perpetually under construction, just like all of us
             </p>
           </div>
@@ -506,10 +374,10 @@ function TabContent({ tab }: { tab: Tab }) {
     case 'blog':
       return (
         <>
-          <h1 className="og-title">blog</h1>
-          <div className="og-section">
-            <h2 className="og-heading">03/10/2026 - first post!!</h2>
-            <p className="og-text">
+          <h1 className="title">blog</h1>
+          <div className="section">
+            <h2 className="heading">03/10/2026 - first post!!</h2>
+            <p className="text">
               my first website was about ninjas and written in dreamweaver
             </p>
           </div>
@@ -518,20 +386,20 @@ function TabContent({ tab }: { tab: Tab }) {
     case 'about':
       return (
         <>
-          <h1 className="og-title">about me</h1>
-          <div className="og-section">
-            <h2 className="og-heading">who am i?</h2>
-            <p className="og-text">
+          <h1 className="title">about me</h1>
+          <div className="section">
+            <h2 className="heading">who am i?</h2>
+            <p className="text">
               i&apos;m noah. developer, creator, explorer. i spend most of my time
               building things for the internet — from full-stack web apps to generative
               art to AI systems.            </p>
           </div>
-          <div className="og-section">
-            <h2 className="og-heading">fun facts</h2>
-            <ul className="og-link-list">
-              <li className="og-text">{'>> '}i&apos;ve been writing code since i was a kid</li>
-              <li className="og-text">{'>> '}my favorite color is whatever #00ff99 is</li>
-              <li className="og-text">{'>> '}i code with Comic Sans</li>
+          <div className="section">
+            <h2 className="heading">fun facts</h2>
+            <ul className="link-list">
+              <li className="text">{'>> '}i&apos;ve been writing code since i was a kid</li>
+              <li className="text">{'>> '}my favorite color is whatever #00ff99 is</li>
+              <li className="text">{'>> '}i code with Comic Sans</li>
             </ul>
           </div>
         </>
@@ -539,29 +407,29 @@ function TabContent({ tab }: { tab: Tab }) {
     case 'music':
       return (
         <>
-          <h1 className="og-title">my music</h1>
+          <h1 className="title">my music</h1>
           <RetroPiano />
         </>
       )
     case 'art':
       return (
         <>
-          <h1 className="og-title">what is art really?</h1>
-          <div className="og-section">
-            <p className="og-text">i can&apos;t draw</p>
+          <h1 className="title">what is art really?</h1>
+          <div className="section">
+            <p className="text">i can&apos;t draw</p>
           </div>
-          <div className="og-section">
-            <h2 className="og-heading">gallery</h2>
-            <div className="og-art-grid">
+          <div className="section">
+            <h2 className="heading">gallery</h2>
+            <div className="art-grid">
               {['#ff006e', '#00ff99', '#3388ff', '#ffff00', '#ff66ff', '#00ccff'].map((color, i) => (
                 <div
                   key={i}
-                  className="og-art-tile"
+                  className="art-tile"
                   style={{
                     background: `linear-gradient(${45 + i * 30}deg, ${color}, ${color}44, #000)`,
                   }}
                 >
-                  <span className="og-art-label">piece #{i + 1}</span>
+                  <span className="art-label">piece #{i + 1}</span>
                 </div>
               ))}
             </div>
@@ -571,10 +439,10 @@ function TabContent({ tab }: { tab: Tab }) {
     case 'contact':
       return (
         <>
-          <h1 className="og-title">contact</h1>
-          <div className="og-section">
-            <h2 className="og-heading">my links</h2>
-            <ul className="og-link-list">
+          <h1 className="title">contact</h1>
+          <div className="section">
+            <h2 className="heading">my links</h2>
+            <ul className="link-list">
               <li><a href="https://github.com/imnoahcook" target="_blank" rel="noopener noreferrer">{'>> '}github</a></li>
               <li><a href="https://linkedin.com/in/noahpcook" target="_blank" rel="noopener noreferrer">{'>> '}linkedin</a></li>
               <li><a href="mailto:imnoahcook@gmail.com">{'>> '}email me</a></li>
@@ -589,24 +457,23 @@ export default function Main() {
   const [activeTab, setActiveTab] = useState<Tab>('home')
 
   return (
-    <div className="og-page">
+    <div className="page">
       <StarField />
-      {/* <SwordCursor /> */}
 
-      <div className="og-wordart-container">
-        <h1 className="og-wordart">Noah Cook</h1>
+      <div className="wordart-container">
+        <h1 className="wordart">Noah Cook</h1>
       </div>
 
-      <div className="og-marquee-container">
-        <div className="og-marquee">
+      <div className="marquee-container">
+        <div className="marquee">
           <span>hi!&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
           <span>hi!&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
         </div>
       </div>
 
-      <div className="og-layout">
+      <div className="layout">
         {/* Sidebar */}
-        <nav className="og-sidebar">
+        <nav className="sidebar" aria-label="Site sections">
           {sidebarLinks.map((link) => (
             <button
               key={link.label}
@@ -614,16 +481,17 @@ export default function Main() {
                 setActiveTab(link.label)
                 window.dispatchEvent(new CustomEvent('rabbit-quip', { detail: 'tab' }))
               }}
-              className={`og-sidebar-link${activeTab === link.label ? ' og-sidebar-active' : ''}`}
+              className={`sidebar-link${activeTab === link.label ? ' sidebar-active' : ''}`}
+              aria-current={activeTab === link.label ? 'page' : undefined}
             >
-              <img src={link.icon} alt={link.label} className="og-sidebar-icon" />
-              <span className="og-sidebar-label">{link.label}</span>
+              <img src={link.icon} alt="" className="sidebar-icon" aria-hidden="true" />
+              <span className="sidebar-label">{link.label}</span>
             </button>
           ))}
         </nav>
 
         {/* Main content */}
-        <main className="og-main">
+        <main className="main">
           <TabContent tab={activeTab} />
         </main>
       </div>

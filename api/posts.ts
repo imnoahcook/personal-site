@@ -6,6 +6,18 @@ import { desc } from 'drizzle-orm'
 
 import { containsBannedWord } from '../src/bannedWords.js'
 
+const ipHits = new Map<string, { count: number; resetAt: number }>()
+
+function rateLimit(req: VercelRequest, res: VercelResponse, limit = 5, windowMs = 60_000): boolean {
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? 'unknown'
+  const now = Date.now()
+  const entry = ipHits.get(ip)
+  if (!entry || now > entry.resetAt) { ipHits.set(ip, { count: 1, resetAt: now + windowMs }); return false }
+  entry.count++
+  if (entry.count > limit) { res.status(429).json({ error: 'too many requests' }); return true }
+  return false
+}
+
 function stripTags(text: string): string {
   return text.replace(/<[^>]*>/g, '')
 }
@@ -30,6 +42,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (req.method === 'POST') {
+      if (rateLimit(req, res)) return
+
       const { author, message } = req.body
       if (!author || !message) {
         res.status(400).json({ error: 'author and message required' })

@@ -184,13 +184,13 @@ export default function LowPolyRabbit() {
   return (
     <div
       ref={wrapperRef}
-      className="og-rabbit-container"
+      className="rabbit-container"
       onPointerDown={onPointerDown}
     >
-      <div className="og-rabbit-bubble">{bubble}</div>
+      <div className="rabbit-bubble">{bubble}</div>
       <div
         ref={containerRef}
-        className="og-rabbit"
+        className="rabbit"
       >
         <Canvas
           camera={{ position: [0, 0, 4], fov: 40 }}

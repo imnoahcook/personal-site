@@ -4,6 +4,18 @@ import postgres from 'postgres'
 import { pgTable, text, integer, timestamp, serial } from 'drizzle-orm/pg-core'
 import { eq, sql } from 'drizzle-orm'
 
+const ipHits = new Map<string, { count: number; resetAt: number }>()
+
+function rateLimit(req: VercelRequest, res: VercelResponse, limit = 20, windowMs = 60_000): boolean {
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? 'unknown'
+  const now = Date.now()
+  const entry = ipHits.get(ip)
+  if (!entry || now > entry.resetAt) { ipHits.set(ip, { count: 1, resetAt: now + windowMs }); return false }
+  entry.count++
+  if (entry.count > limit) { res.status(429).json({ error: 'too many requests' }); return true }
+  return false
+}
+
 const posts = pgTable('posts', {
   id: serial('id').primaryKey(),
   author: text('author').notNull(),
@@ -17,6 +29,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(405).json({ error: 'POST only' })
     return
   }
+
+  if (rateLimit(req, res)) return
 
   if (!process.env.DATABASE_URL) {
     res.status(500).json({ error: 'DATABASE_URL not set' })

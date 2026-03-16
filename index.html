@@ -2,14 +2,45 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Personal website for Noah Cook" />
-    <title>Noah Cook</title>
+    <title>Noah Cook — Developer, Creator, Explorer</title>
+    <meta name="description" content="Personal website of Noah Cook. Full-stack developer building web apps, generative art, and AI systems." />
+    <link rel="canonical" href="https://noahcook.xyz/" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://noahcook.xyz/" />
+    <meta property="og:title" content="Noah Cook — Developer, Creator, Explorer" />
+    <meta property="og:description" content="Full-stack developer building web apps, generative art, and AI systems." />
+    <meta property="og:site_name" content="Noah Cook" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Noah Cook — Developer, Creator, Explorer" />
+    <meta name="twitter:description" content="Full-stack developer building web apps, generative art, and AI systems." />
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#0a0a1a" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Fallback content for crawlers / no-JS -->
+    <div id="root">
+      <noscript>
+        <h1>Noah Cook</h1>
+        <p>Developer, Creator, Explorer. Building web apps, generative art, and AI systems.</p>
+        <p>Contact: <a href="mailto:imnoahcook@gmail.com">imnoahcook@gmail.com</a> | <a href="https://github.com/imnoahcook">GitHub</a> | <a href="https://linkedin.com/in/noahpcook">LinkedIn</a></p>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

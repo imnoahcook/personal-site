@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import { pgTable, text, integer, timestamp, serial } from 'drizzle-orm/pg-core'
-import { desc } from 'drizzle-orm'
+import { pgTable, text, integer, boolean, timestamp, serial } from 'drizzle-orm/pg-core'
+import { desc, eq, sql } from 'drizzle-orm'
 
 import { containsBannedWord } from '../src/bannedWords.js'
 
@@ -38,8 +38,16 @@ const posts = pgTable('posts', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
-async function ensureUsersTable(client: postgres.Sql) {
-  await client`
+const users = pgTable('users', {
+  uid: text('uid').primaryKey(),
+  aliases: text('aliases').array().default([]),
+  banned: boolean('banned').notNull().default(false),
+  bannedAt: timestamp('banned_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+async function ensureUsersTable(db: ReturnType<typeof drizzle>) {
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS users (
       uid TEXT PRIMARY KEY,
       aliases TEXT[] DEFAULT '{}',
@@ -47,7 +55,7 @@ async function ensureUsersTable(client: postgres.Sql) {
       banned_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
     )
-  `
+  `)
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -65,11 +73,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const uid = getUid(req)
 
-      await ensureUsersTable(client)
+      await ensureUsersTable(db)
 
       if (uid) {
-        const [user] = await client`SELECT banned FROM users WHERE uid = ${uid}`
-        if (user?.banned) {
+        const userRows = await db
+          .select({ banned: users.banned })
+          .from(users)
+          .where(eq(users.uid, uid))
+        if (userRows[0]?.banned) {
           res.status(403).json({ error: 'you are banned', banned: true })
           return
         }
@@ -83,11 +94,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (containsBannedWord(String(author)) || containsBannedWord(String(message))) {
         if (uid) {
-          await client`
-            INSERT INTO users (uid, banned, banned_at)
-            VALUES (${uid}, true, NOW())
-            ON CONFLICT (uid) DO UPDATE SET banned = true, banned_at = NOW()
-          `
+          await db
+            .insert(users)
+            .values({ uid, banned: true, bannedAt: new Date() })
+            .onConflictDoUpdate({
+              target: users.uid,
+              set: { banned: true, bannedAt: new Date() },
+            })
         }
         res.status(403).json({ error: 'prohibited language', banned: true })
         return
@@ -106,15 +119,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .returning()
 
       if (uid) {
-        await client`
-          INSERT INTO users (uid, aliases)
-          VALUES (${uid}, ARRAY[${cleanAuthor}])
-          ON CONFLICT (uid) DO UPDATE SET
-            aliases = CASE
-              WHEN ${cleanAuthor} = ANY(users.aliases) THEN users.aliases
-              ELSE array_append(users.aliases, ${cleanAuthor})
-            END
-        `
+        await db
+          .insert(users)
+          .values({ uid, aliases: [cleanAuthor] })
+          .onConflictDoUpdate({
+            target: users.uid,
+            set: {
+              aliases: sql`CASE
+                WHEN ${cleanAuthor} = ANY(${users.aliases}) THEN ${users.aliases}
+                ELSE array_append(${users.aliases}, ${cleanAuthor})
+              END`,
+            },
+          })
       }
 
       res.json(result[0])

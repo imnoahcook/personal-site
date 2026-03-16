@@ -1,5 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
+import { pgTable, text, boolean, integer, timestamp, primaryKey } from 'drizzle-orm/pg-core'
+import { eq, sql } from 'drizzle-orm'
 
 function getUid(req: VercelRequest): string | null {
   const cookies = req.headers.cookie
@@ -8,8 +11,24 @@ function getUid(req: VercelRequest): string | null {
   return match ? decodeURIComponent(match[1]) : null
 }
 
-async function ensureTables(client: postgres.Sql) {
-  await client`
+const users = pgTable('users', {
+  uid: text('uid').primaryKey(),
+  aliases: text('aliases').array().default([]),
+  banned: boolean('banned').notNull().default(false),
+  bannedAt: timestamp('banned_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+const userStars = pgTable('user_stars', {
+  uid: text('uid').notNull(),
+  postId: integer('post_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.uid, table.postId] }),
+])
+
+async function ensureTables(db: ReturnType<typeof drizzle>) {
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS users (
       uid TEXT PRIMARY KEY,
       aliases TEXT[] DEFAULT '{}',
@@ -17,15 +36,15 @@ async function ensureTables(client: postgres.Sql) {
       banned_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
     )
-  `
-  await client`
+  `)
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS user_stars (
       uid TEXT NOT NULL,
       post_id INTEGER NOT NULL REFERENCES posts(id),
       created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
       PRIMARY KEY (uid, post_id)
     )
-  `
+  `)
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -46,20 +65,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const client = postgres(process.env.DATABASE_URL, { prepare: false })
+  const db = drizzle(client)
 
   try {
-    await ensureTables(client)
+    await ensureTables(db)
 
-    const [user] = await client`
-      SELECT banned, aliases FROM users WHERE uid = ${uid}
-    `
-    const stars = await client`
-      SELECT post_id FROM user_stars WHERE uid = ${uid}
-    `
+    const userRows = await db
+      .select({ banned: users.banned, aliases: users.aliases })
+      .from(users)
+      .where(eq(users.uid, uid))
 
+    const starRows = await db
+      .select({ postId: userStars.postId })
+      .from(userStars)
+      .where(eq(userStars.uid, uid))
+
+    const user = userRows[0]
     res.json({
       banned: user?.banned ?? false,
-      starred: stars.map((r) => r.post_id),
+      starred: starRows.map((r) => r.postId),
       aliases: user?.aliases ?? [],
     })
   } catch (err) {

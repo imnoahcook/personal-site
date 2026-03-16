@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import { pgTable, text, integer, timestamp } from 'drizzle-orm/pg-core'
-import { eq, sql } from 'drizzle-orm'
+import { pgTable, text, integer, timestamp, primaryKey } from 'drizzle-orm/pg-core'
+import { eq, sql, and } from 'drizzle-orm'
 
 const ipHits = new Map<string, { count: number; resetAt: number }>()
 
@@ -29,15 +29,23 @@ const visitors = pgTable('visitors', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
-async function ensureTable(client: postgres.Sql) {
-  await client`
+const visitedUids = pgTable('visited_uids', {
+  uid: text('uid').notNull(),
+  page: text('page').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.uid, table.page] }),
+])
+
+async function ensureTable(db: ReturnType<typeof drizzle>) {
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS visited_uids (
       uid TEXT NOT NULL,
       page TEXT NOT NULL,
       created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
       PRIMARY KEY (uid, page)
     )
-  `
+  `)
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -55,22 +63,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'POST') {
       if (rateLimit(req, res, 10)) return
 
-      await ensureTable(client)
+      await ensureTable(db)
       const uid = getUid(req)
 
       if (uid) {
-        const existing = await client`
-          SELECT 1 FROM visited_uids WHERE uid = ${uid} AND page = ${page} LIMIT 1
-        `
+        const existing = await db
+          .select()
+          .from(visitedUids)
+          .where(and(eq(visitedUids.uid, uid), eq(visitedUids.page, page)))
+          .limit(1)
+
         if (existing.length > 0) {
           const result = await db.select().from(visitors).where(eq(visitors.page, page))
           res.json({ count: result[0]?.count ?? 0, already: true })
           return
         }
-        await client`
-          INSERT INTO visited_uids (uid, page) VALUES (${uid}, ${page})
-          ON CONFLICT DO NOTHING
-        `
+
+        await db
+          .insert(visitedUids)
+          .values({ uid, page })
+          .onConflictDoNothing()
       }
 
       const result = await db

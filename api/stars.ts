@@ -39,15 +39,15 @@ const userStars = pgTable('user_stars', {
   primaryKey({ columns: [table.uid, table.postId] }),
 ])
 
-async function ensureTable(client: postgres.Sql) {
-  await client`
+async function ensureTable(db: ReturnType<typeof drizzle>) {
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS user_stars (
       uid TEXT NOT NULL,
       post_id INTEGER NOT NULL REFERENCES posts(id),
       created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
       PRIMARY KEY (uid, post_id)
     )
-  `
+  `)
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -62,12 +62,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const db = drizzle(client)
 
   try {
-    await ensureTable(client)
+    await ensureTable(db)
     const uid = getUid(req)
 
     if (req.method === 'GET') {
       if (!uid) { res.json({ starred: [] }); return }
-      const rows = await db.select({ postId: userStars.postId }).from(userStars).where(eq(userStars.uid, uid))
+      const rows = await db
+        .select({ postId: userStars.postId })
+        .from(userStars)
+        .where(eq(userStars.uid, uid))
       res.json({ starred: rows.map((r) => r.postId) })
       return
     }
@@ -88,14 +91,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return
     }
 
-    const existing = await db.select().from(userStars).where(
-      and(eq(userStars.uid, uid), eq(userStars.postId, id))
-    )
+    const existing = await db
+      .select()
+      .from(userStars)
+      .where(and(eq(userStars.uid, uid), eq(userStars.postId, id)))
 
     if (existing.length > 0) {
-      await db.delete(userStars).where(
-        and(eq(userStars.uid, uid), eq(userStars.postId, id))
-      )
+      await db
+        .delete(userStars)
+        .where(and(eq(userStars.uid, uid), eq(userStars.postId, id)))
       const result = await db
         .update(posts)
         .set({ stars: sql`GREATEST(${posts.stars} - 1, 0)` })

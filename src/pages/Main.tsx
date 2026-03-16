@@ -84,7 +84,7 @@ function Guestbook() {
   const [starred, setStarred] = useState<Set<number>>(new Set())
   const [author, setAuthor] = useState('')
   const [message, setMessage] = useState('')
-  const [banned, setBanned] = useState(() => getCookie('banned') === 'true')
+  const [banned, setBanned] = useState(false)
   const [showBanModal, setShowBanModal] = useState(false)
   const [myCountry, setMyCountry] = useState('')
 
@@ -94,9 +94,12 @@ function Guestbook() {
   })
 
   useEffect(() => {
-    fetch('/api/stars', { method: 'GET' })
+    fetch('/api/me')
       .then((r) => r.json())
-      .then((d) => { if (Array.isArray(d.starred)) setStarred(new Set(d.starred)) })
+      .then((d) => {
+        if (d.banned) setBanned(true)
+        if (Array.isArray(d.starred)) setStarred(new Set(d.starred))
+      })
       .catch(() => {})
     fetch('/api/country').then((r) => r.json()).then((d) => setMyCountry(d.country)).catch(() => {})
   }, [])
@@ -107,9 +110,14 @@ function Guestbook() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
-      }).then((r) => r.json()),
-    onSuccess: (newPost: Post) => {
-      queryClient.setQueryData<Post[]>(['posts'], (old = []) => [newPost, ...old])
+      }).then((r) => r.json().then((d) => ({ ok: r.ok, data: d }))),
+    onSuccess: ({ ok, data }) => {
+      if (!ok && data.banned) {
+        setBanned(true)
+        setShowBanModal(true)
+        return
+      }
+      queryClient.setQueryData<Post[]>(['posts'], (old = []) => [data, ...old])
       setAuthor('')
       setMessage('')
     },
@@ -149,7 +157,6 @@ function Guestbook() {
     if (banned) return
     if (!author.trim() || !message.trim() || createPost.isPending) return
     if (containsBannedWord(author) || containsBannedWord(message)) {
-      setCookie('banned', 'true', 365)
       setBanned(true)
       setShowBanModal(true)
       return
@@ -446,7 +453,7 @@ function TabContent({ tab }: { tab: Tab }) {
     case 'art':
       return (
         <>
-          <h1 className="title">what is art really?</h1>
+          <h1 className="title">art</h1>
           <div className="section">
             <p className="text">i can&apos;t draw</p>
           </div>

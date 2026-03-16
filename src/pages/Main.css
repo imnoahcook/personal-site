@@ -85,6 +85,7 @@
 
 .marquee span {
   display: inline-block;
+  min-width: 100vw;
 }
 
 @keyframes marquee-scroll {
@@ -652,6 +653,7 @@
   cursor: grab;
   touch-action: none;
   user-select: none;
+  will-change: left, top;
 }
 
 .rabbit-container:active {

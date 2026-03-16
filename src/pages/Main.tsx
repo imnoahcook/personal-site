@@ -36,19 +36,24 @@ function StarField() {
 }
 
 function VisitorCounter() {
-  const hasFired = useRef(false)
-  const increment = useMutation({
-    mutationFn: () => fetch('/api/visitors?page=og', { method: 'POST' }).then((r) => r.json()),
+  const [count, setCount] = useState(() => {
+    const stored = sessionStorage.getItem('visitor-count')
+    return stored ? Number(stored) : 0
   })
 
   useEffect(() => {
-    if (hasFired.current) return
-    hasFired.current = true
-    increment.mutate()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (sessionStorage.getItem('visitor-counted')) return
+    sessionStorage.setItem('visitor-counted', 'true')
+    fetch('/api/visitors?page=og', { method: 'POST' })
+      .then((r) => r.json())
+      .then((d) => {
+        setCount(d.count)
+        sessionStorage.setItem('visitor-count', String(d.count))
+      })
+      .catch(() => {})
   }, [])
 
-  const display = increment.data?.count ?? 0
+  const display = count
   return (
     <div className="visitor-counter">
       <span className="counter-label">visitors:</span>
@@ -64,16 +69,24 @@ function VisitorCounter() {
 import { containsBannedWord } from '../bannedWords'
 
 const BANNED_KEY = 'banned'
+const STARRED_KEY = 'starred-posts'
+
+function loadStarred(): Set<number> {
+  try {
+    const stored = localStorage.getItem(STARRED_KEY)
+    if (stored) return new Set(JSON.parse(stored))
+  } catch { /* ignore corrupt data */ }
+  return new Set()
+}
 
 function Guestbook() {
   const queryClient = useQueryClient()
-  const [starred, setStarred] = useState<Set<number>>(new Set())
+  const [starred, setStarred] = useState<Set<number>>(() => loadStarred())
   const [author, setAuthor] = useState('')
   const [message, setMessage] = useState('')
   const [banned, setBanned] = useState(() => localStorage.getItem(BANNED_KEY) === 'true')
   const [showBanModal, setShowBanModal] = useState(false)
   const [myCountry, setMyCountry] = useState('')
-  const firedStarsRef = useRef<Set<number>>(new Set())
 
   const { data: posts = [] } = useQuery<Post[]>({
     queryKey: ['posts'],
@@ -99,17 +112,14 @@ function Guestbook() {
   })
 
   const handleStar = (id: number) => {
-    const willStar = !starred.has(id)
+    if (starred.has(id)) return
     setStarred((prev) => {
       const next = new Set(prev)
-      if (willStar) next.add(id)
-      else next.delete(id)
+      next.add(id)
+      localStorage.setItem(STARRED_KEY, JSON.stringify([...next]))
       return next
     })
-    if (willStar && !firedStarsRef.current.has(id)) {
-      firedStarsRef.current.add(id)
-      fetch(`/api/stars?id=${id}`, { method: 'POST' })
-    }
+    fetch(`/api/stars?id=${id}`, { method: 'POST' })
   }
 
   const handleSubmit = (e: React.FormEvent) => {

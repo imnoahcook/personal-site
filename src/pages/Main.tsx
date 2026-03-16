@@ -115,7 +115,7 @@ function Guestbook() {
     },
   })
 
-  const starPost = useMutation({
+  const toggleStar = useMutation({
     mutationFn: (id: number) =>
       fetch(`/api/stars?id=${id}`, { method: 'POST' }).then((r) => {
         if (!r.ok) throw new Error('star failed')
@@ -123,15 +123,24 @@ function Guestbook() {
       }),
     onMutate: (id: number) => {
       const prev = queryClient.getQueryData<Post[]>(['posts'])
+      const wasStarred = starred.has(id)
       queryClient.setQueryData<Post[]>(['posts'], (old = []) =>
-        old.map((p) => (p.id === id ? { ...p, stars: p.stars + 1 } : p))
+        old.map((p) => (p.id === id ? { ...p, stars: p.stars + (wasStarred ? -1 : 1) } : p))
       )
-      setStarred((s) => { const next = new Set(s); next.add(id); return next })
-      return { prev }
+      setStarred((s) => {
+        const next = new Set(s)
+        if (wasStarred) next.delete(id); else next.add(id)
+        return next
+      })
+      return { prev, wasStarred }
     },
     onError: (_err, id, context) => {
       if (context?.prev) queryClient.setQueryData(['posts'], context.prev)
-      setStarred((s) => { const next = new Set(s); next.delete(id); return next })
+      setStarred((s) => {
+        const next = new Set(s)
+        if (context?.wasStarred) next.add(id); else next.delete(id)
+        return next
+      })
     },
   })
 
@@ -167,9 +176,8 @@ function Guestbook() {
                 </span>
                 <button
                   className={`star-btn${starred.has(post.id) ? ' starred' : ''}`}
-                  onClick={() => { if (!starred.has(post.id)) starPost.mutate(post.id) }}
-                  disabled={starred.has(post.id)}
-                  aria-label={`${starred.has(post.id) ? 'Starred' : 'Star'} post by ${post.author}, ${post.stars} stars`}
+                  onClick={() => toggleStar.mutate(post.id)}
+                  aria-label={`${starred.has(post.id) ? 'Unstar' : 'Star'} post by ${post.author}, ${post.stars} stars`}
                 >
                   {starred.has(post.id) ? '\u2605' : '\u2606'} {post.stars}
                 </button>

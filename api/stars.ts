@@ -91,24 +91,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const existing = await db.select().from(userStars).where(
       and(eq(userStars.uid, uid), eq(userStars.postId, id))
     )
+
     if (existing.length > 0) {
-      res.status(409).json({ error: 'already starred' })
-      return
+      await db.delete(userStars).where(
+        and(eq(userStars.uid, uid), eq(userStars.postId, id))
+      )
+      const result = await db
+        .update(posts)
+        .set({ stars: sql`GREATEST(${posts.stars} - 1, 0)` })
+        .where(eq(posts.id, id))
+        .returning()
+      res.json({ stars: result[0]?.stars ?? 0, starred: false })
+    } else {
+      await db.insert(userStars).values({ uid, postId: id })
+      const result = await db
+        .update(posts)
+        .set({ stars: sql`${posts.stars} + 1` })
+        .where(eq(posts.id, id))
+        .returning()
+      if (result.length === 0) {
+        res.status(404).json({ error: 'post not found' })
+        return
+      }
+      res.json({ stars: result[0].stars, starred: true })
     }
-
-    await db.insert(userStars).values({ uid, postId: id })
-    const result = await db
-      .update(posts)
-      .set({ stars: sql`${posts.stars} + 1` })
-      .where(eq(posts.id, id))
-      .returning()
-
-    if (result.length === 0) {
-      res.status(404).json({ error: 'post not found' })
-      return
-    }
-
-    res.json({ stars: result[0].stars })
   } catch (err) {
     res.status(500).json({ error: String(err) })
   } finally {

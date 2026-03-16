@@ -31,24 +31,43 @@ function countryFlag(code: string): string {
   )
 }
 
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+function setCookie(name: string, value: string, days: number) {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString()
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`
+}
+
+function getOrCreateUid(): string {
+  const existing = getCookie('uid')
+  if (existing) return existing
+  const uid = crypto.randomUUID()
+  setCookie('uid', uid, 365)
+  return uid
+}
+
 function StarField() {
   return <div className="starfield" />
 }
 
 function VisitorCounter() {
   const [count, setCount] = useState(() => {
-    const stored = sessionStorage.getItem('visitor-count')
+    const stored = getCookie('visitor-count')
     return stored ? Number(stored) : 0
   })
 
   useEffect(() => {
-    if (sessionStorage.getItem('visitor-counted')) return
-    sessionStorage.setItem('visitor-counted', 'true')
+    getOrCreateUid()
+    if (getCookie('visitor-counted')) return
+    setCookie('visitor-counted', 'true', 365)
     fetch('/api/visitors?page=og', { method: 'POST' })
       .then((r) => r.json())
       .then((d) => {
         setCount(d.count)
-        sessionStorage.setItem('visitor-count', String(d.count))
+        setCookie('visitor-count', String(d.count), 365)
       })
       .catch(() => {})
   }, [])

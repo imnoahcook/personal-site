@@ -54,21 +54,13 @@ function StarField() {
 }
 
 function VisitorCounter() {
-  const [count, setCount] = useState(() => {
-    const stored = getCookie('visitor-count')
-    return stored ? Number(stored) : 0
-  })
+  const [count, setCount] = useState(0)
 
   useEffect(() => {
     getOrCreateUid()
-    if (getCookie('visitor-counted')) return
-    setCookie('visitor-counted', 'true', 365)
     fetch('/api/visitors?page=og', { method: 'POST' })
       .then((r) => r.json())
-      .then((d) => {
-        setCount(d.count)
-        setCookie('visitor-count', String(d.count), 365)
-      })
+      .then((d) => setCount(d.count))
       .catch(() => {})
   }, [])
 
@@ -87,23 +79,12 @@ function VisitorCounter() {
 
 import { containsBannedWord } from '../bannedWords'
 
-const BANNED_KEY = 'banned'
-const STARRED_KEY = 'starred-posts'
-
-function loadStarred(): Set<number> {
-  try {
-    const stored = localStorage.getItem(STARRED_KEY)
-    if (stored) return new Set(JSON.parse(stored))
-  } catch { /* ignore corrupt data */ }
-  return new Set()
-}
-
 function Guestbook() {
   const queryClient = useQueryClient()
-  const [starred, setStarred] = useState<Set<number>>(() => loadStarred())
+  const [starred, setStarred] = useState<Set<number>>(new Set())
   const [author, setAuthor] = useState('')
   const [message, setMessage] = useState('')
-  const [banned, setBanned] = useState(() => localStorage.getItem(BANNED_KEY) === 'true')
+  const [banned, setBanned] = useState(() => getCookie('banned') === 'true')
   const [showBanModal, setShowBanModal] = useState(false)
   const [myCountry, setMyCountry] = useState('')
 
@@ -113,6 +94,10 @@ function Guestbook() {
   })
 
   useEffect(() => {
+    fetch('/api/stars', { method: 'GET' })
+      .then((r) => r.json())
+      .then((d) => { if (Array.isArray(d.starred)) setStarred(new Set(d.starred)) })
+      .catch(() => {})
     fetch('/api/country').then((r) => r.json()).then((d) => setMyCountry(d.country)).catch(() => {})
   }, [])
 
@@ -135,7 +120,6 @@ function Guestbook() {
     setStarred((prev) => {
       const next = new Set(prev)
       next.add(id)
-      localStorage.setItem(STARRED_KEY, JSON.stringify([...next]))
       return next
     })
     fetch(`/api/stars?id=${id}`, { method: 'POST' })
@@ -146,7 +130,7 @@ function Guestbook() {
     if (banned) return
     if (!author.trim() || !message.trim() || createPost.isPending) return
     if (containsBannedWord(author) || containsBannedWord(message)) {
-      localStorage.setItem(BANNED_KEY, 'true')
+      setCookie('banned', 'true', 365)
       setBanned(true)
       setShowBanModal(true)
       return

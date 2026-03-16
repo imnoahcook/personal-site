@@ -16,11 +16,29 @@ function rateLimit(req: VercelRequest, res: VercelResponse, limit = 10, windowMs
   return false
 }
 
+function getUid(req: VercelRequest): string | null {
+  const cookies = req.headers.cookie
+  if (!cookies) return null
+  const match = cookies.match(/(?:^|; )uid=([^;]*)/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 const visitors = pgTable('visitors', {
   page: text('page').primaryKey(),
   count: integer('count').notNull().default(0),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
+
+async function ensureTable(client: postgres.Sql) {
+  await client`
+    CREATE TABLE IF NOT EXISTS visited_uids (
+      uid TEXT NOT NULL,
+      page TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+      PRIMARY KEY (uid, page)
+    )
+  `
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!process.env.DATABASE_URL) {
@@ -36,6 +54,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'POST') {
       if (rateLimit(req, res, 10)) return
+
+      await ensureTable(client)
+      const uid = getUid(req)
+
+      if (uid) {
+        const existing = await client`
+          SELECT 1 FROM visited_uids WHERE uid = ${uid} AND page = ${page} LIMIT 1
+        `
+        if (existing.length > 0) {
+          const result = await db.select().from(visitors).where(eq(visitors.page, page))
+          res.json({ count: result[0]?.count ?? 0, already: true })
+          return
+        }
+        await client`
+          INSERT INTO visited_uids (uid, page) VALUES (${uid}, ${page})
+          ON CONFLICT DO NOTHING
+        `
+      }
 
       const result = await db
         .insert(visitors)

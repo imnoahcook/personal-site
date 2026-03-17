@@ -121,3 +121,53 @@
 .fp-back { transform: rotateY(180deg) translateZ(200px); }
 .fp-left { transform: rotateY(-90deg) translateZ(200px); }
 .fp-right { transform: rotateY(90deg) translateZ(200px); }
+
+/* Mobile joystick controls */
+.fp-joystick {
+  position: fixed;
+  bottom: 40px;
+  z-index: 300;
+  touch-action: none;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.fp-joystick-left {
+  left: 40px;
+}
+
+.fp-joystick-right {
+  right: 40px;
+}
+
+.fp-joystick-ring {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.fp-joystick-knob {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transition: transform 0.05s ease-out;
+  pointer-events: none;
+}
+
+.fp-joystick-label {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}

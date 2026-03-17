@@ -10,6 +10,8 @@ export default function Portal() {
   const noclipRef = useRef(false)
   const spookyCatRef = useRef<HTMLDivElement>(null)
   const spookyCatSpriteRef = useRef<HTMLImageElement>(null)
+  const touchMoveRef = useRef({ forward: 0, rotate: 0 })
+  const touchAnimRef = useRef<number>(0)
 
   const updateGeometry = useCallback(() => {
     const el = geometryRef.current
@@ -37,6 +39,19 @@ export default function Portal() {
     return b
   }, [])
 
+  const applyMovement = useCallback((forward: number, rotate: number) => {
+    const pos = posRef.current
+    const rot = rotRef.current
+    rot.y += rotate
+    if (forward !== 0) {
+      const np = movePoint(pos.x, pos.z, forward, rot.y)
+      const bounds = inBounds(np.x, np.z)
+      if (bounds.x) pos.x = np.x
+      if (bounds.z) pos.z = np.z
+    }
+    updateGeometry()
+  }, [movePoint, inBounds, updateGeometry])
+
   const teleport = useCallback((x: number, z: number, rot: number) => {
     posRef.current.x = x
     posRef.current.z = z
@@ -44,58 +59,142 @@ export default function Portal() {
     updateGeometry()
   }, [updateGeometry])
 
+  // Keyboard controls
   useEffect(() => {
     const rotationSpeed = 5
     const translationSpeed = 30
 
     const onKeyDown = (e: KeyboardEvent) => {
-      const pos = posRef.current
-      const rot = rotRef.current
-
       switch (e.key) {
         case 'ArrowLeft':
         case 'a':
-          rot.y -= rotationSpeed
+          applyMovement(0, -rotationSpeed)
           break
         case 'ArrowRight':
         case 'd':
-          rot.y += rotationSpeed
+          applyMovement(0, rotationSpeed)
           break
         case 'ArrowUp':
-        case 'w': {
-          const np = movePoint(pos.x, pos.z, translationSpeed, rot.y)
-          const bounds = inBounds(np.x, np.z)
-          if (bounds.x) pos.x = np.x
-          if (bounds.z) pos.z = np.z
+        case 'w':
+          applyMovement(translationSpeed, 0)
           break
-        }
         case 'ArrowDown':
-        case 's': {
-          const np = movePoint(pos.x, pos.z, -translationSpeed, rot.y)
-          const bounds = inBounds(np.x, np.z)
-          if (bounds.x) pos.x = np.x
-          if (bounds.z) pos.z = np.z
+        case 's':
+          applyMovement(-translationSpeed, 0)
           break
-        }
         case 'v':
           noclipRef.current = !noclipRef.current
           break
       }
-      updateGeometry()
     }
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [movePoint, inBounds, updateGeometry])
+  }, [applyMovement])
+
+  // Touch controls — continuous movement loop
+  useEffect(() => {
+    let running = false
+
+    const tick = () => {
+      const { forward, rotate } = touchMoveRef.current
+      if (forward !== 0 || rotate !== 0) {
+        applyMovement(forward, rotate)
+      }
+      if (running) {
+        touchAnimRef.current = requestAnimationFrame(tick)
+      }
+    }
+
+    running = true
+    touchAnimRef.current = requestAnimationFrame(tick)
+    return () => {
+      running = false
+      cancelAnimationFrame(touchAnimRef.current)
+    }
+  }, [applyMovement])
+
+  // Touch handlers for mobile joysticks
+  const leftTouchId = useRef<number | null>(null)
+  const rightTouchId = useRef<number | null>(null)
+  const leftOrigin = useRef({ x: 0, y: 0 })
+  const rightOrigin = useRef({ x: 0, y: 0 })
+  const leftStickRef = useRef<HTMLDivElement>(null)
+  const rightStickRef = useRef<HTMLDivElement>(null)
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const w = window.innerWidth
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i]
+      if (t.clientX < w / 2 && leftTouchId.current === null) {
+        leftTouchId.current = t.identifier
+        leftOrigin.current = { x: t.clientX, y: t.clientY }
+      } else if (t.clientX >= w / 2 && rightTouchId.current === null) {
+        rightTouchId.current = t.identifier
+        rightOrigin.current = { x: t.clientX, y: t.clientY }
+      }
+    }
+  }, [])
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    e.preventDefault()
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i]
+      if (t.identifier === leftTouchId.current) {
+        const dy = leftOrigin.current.y - t.clientY
+        const clampedForward = Math.max(-1, Math.min(1, dy / 60))
+        touchMoveRef.current.forward = clampedForward * 12
+        if (leftStickRef.current) {
+          const dx = Math.max(-30, Math.min(30, t.clientX - leftOrigin.current.x))
+          const dyVis = Math.max(-30, Math.min(30, t.clientY - leftOrigin.current.y))
+          leftStickRef.current.style.transform = `translate(${dx}px, ${dyVis}px)`
+        }
+      }
+      if (t.identifier === rightTouchId.current) {
+        const dx = t.clientX - rightOrigin.current.x
+        const clampedRotate = Math.max(-1, Math.min(1, dx / 60))
+        touchMoveRef.current.rotate = clampedRotate * 3
+        if (rightStickRef.current) {
+          const dxVis = Math.max(-30, Math.min(30, dx))
+          const dyVis = Math.max(-30, Math.min(30, t.clientY - rightOrigin.current.y))
+          rightStickRef.current.style.transform = `translate(${dxVis}px, ${dyVis}px)`
+        }
+      }
+    }
+  }, [])
+
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i]
+      if (t.identifier === leftTouchId.current) {
+        leftTouchId.current = null
+        touchMoveRef.current.forward = 0
+        if (leftStickRef.current) leftStickRef.current.style.transform = ''
+      }
+      if (t.identifier === rightTouchId.current) {
+        rightTouchId.current = null
+        touchMoveRef.current.rotate = 0
+        if (rightStickRef.current) rightStickRef.current.style.transform = ''
+      }
+    }
+  }, [])
 
   const showSpookyCat = () => {
     if (spookyCatRef.current) spookyCatRef.current.style.display = 'block'
     if (spookyCatSpriteRef.current) spookyCatSpriteRef.current.style.opacity = '1'
   }
 
+  const isMobile = typeof window !== 'undefined' && 'ontouchstart' in window
+
   return (
-    <div className="fp-page">
-      WASD to move, look around the world!
+    <div
+      className="fp-page"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchEnd}
+    >
+      {isMobile ? 'Touch to move' : 'WASD to move, look around the world!'}
       <div id="fp-scene">
         <div id="fp-geometry" ref={geometryRef}>
           <div className="fp-floor" />
@@ -230,6 +329,24 @@ export default function Portal() {
           <div className="fp-wallLong" style={{ transform: 'rotateY(-90deg) translate3d(400px, -200px, -800px)' }} />
         </div>
       </div>
+
+      {/* Mobile joystick overlays */}
+      {isMobile && (
+        <>
+          <div className="fp-joystick fp-joystick-left">
+            <div className="fp-joystick-ring">
+              <div ref={leftStickRef} className="fp-joystick-knob" />
+            </div>
+            <span className="fp-joystick-label">move</span>
+          </div>
+          <div className="fp-joystick fp-joystick-right">
+            <div className="fp-joystick-ring">
+              <div ref={rightStickRef} className="fp-joystick-knob" />
+            </div>
+            <span className="fp-joystick-label">look</span>
+          </div>
+        </>
+      )}
     </div>
   )
 }

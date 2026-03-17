@@ -1,0 +1,173 @@
+.inspect-page {
+  position: fixed;
+  inset: 0;
+  background: #0a0a14;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Courier New', monospace;
+  color: #c0c0c0;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.inspect-viewport {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+}
+
+.inspect-viewport canvas {
+  image-rendering: pixelated;
+}
+
+/* PS1 scanline effect */
+.inspect-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.15) 2px,
+    rgba(0, 0, 0, 0.15) 4px
+  );
+}
+
+/* Dither noise */
+.inspect-dither {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect x='0' y='0' width='1' height='1' fill='white'/%3E%3Crect x='2' y='2' width='1' height='1' fill='white'/%3E%3C/svg%3E");
+  background-size: 4px 4px;
+}
+
+/* UI panel */
+.inspect-ui {
+  background: rgba(10, 10, 20, 0.95);
+  border-top: 2px solid #333;
+  padding: 16px;
+  min-height: 160px;
+}
+
+.inspect-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 8px;
+}
+
+.inspect-title {
+  font-size: 18px;
+  color: #e8d0a0;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.inspect-back {
+  background: none;
+  border: 1px solid #555;
+  color: #999;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  padding: 4px 10px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+
+.inspect-back:hover {
+  color: #e8d0a0;
+  border-color: #e8d0a0;
+}
+
+.inspect-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #999;
+}
+
+.inspect-hint {
+  color: #555;
+  font-size: 12px;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.inspect-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.inspect-slot {
+  background: rgba(30, 30, 50, 0.8);
+  border: 1px solid #333;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  transition: border-color 0.2s;
+}
+
+.inspect-slot:hover {
+  border-color: #e8d0a0;
+}
+
+.inspect-slot-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.inspect-slot-name {
+  font-size: 10px;
+  color: #888;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.inspect-home {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  color: #555;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  text-decoration: none;
+  letter-spacing: 2px;
+  z-index: 210;
+  border: 1px solid #333;
+  padding: 4px 10px;
+}
+
+.inspect-home:hover {
+  color: #e8d0a0;
+  border-color: #e8d0a0;
+}
+
+@media (min-width: 768px) {
+  .inspect-page {
+    flex-direction: row;
+  }
+
+  .inspect-viewport {
+    flex: 1;
+  }
+
+  .inspect-ui {
+    width: 320px;
+    min-height: auto;
+    border-top: none;
+    border-left: 2px solid #333;
+  }
+
+  .inspect-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

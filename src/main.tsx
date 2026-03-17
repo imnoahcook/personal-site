@@ -7,6 +7,7 @@ import Layout from './components/Layout'
 import Main from './pages/Main'
 
 const Portal = lazy(() => import('./pages/Portal'))
+const Inspection = lazy(() => import('./pages/Inspection'))
 
 const queryClient = new QueryClient()
 
@@ -20,6 +21,11 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/portal" element={
             <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading portal...</div>}>
               <Portal />
+            </Suspense>
+          } />
+          <Route path="/inspection" element={
+            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading inspection...</div>}>
+              <Inspection />
             </Suspense>
           } />
         </Route>

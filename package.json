@@ -7,6 +7,7 @@
     "dev": "vite",
     "dev:api": "vercel dev",
     "build": "tsc -b && vite build",
+    "capture:level23": "node scripts/capture-level23.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

@@ -1,0 +1,133 @@
+.non-euclidean-page {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #040406;
+}
+
+.non-euclidean-hub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top, rgba(74, 54, 32, 0.28), transparent 42%),
+    linear-gradient(180deg, #060608 0%, #0e0907 100%);
+}
+
+.non-euclidean-viewport {
+  width: 100%;
+  height: 100%;
+}
+
+.non-euclidean-ui {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  max-width: 380px;
+  padding: 14px 16px;
+  background: rgba(7, 7, 11, 0.82);
+  border: 1px solid rgba(210, 191, 160, 0.22);
+  color: #e7dcc9;
+  font-family: 'Space Mono', monospace;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.non-euclidean-ui--hub {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: min(840px, 100%);
+  max-width: none;
+  pointer-events: auto;
+}
+
+.non-euclidean-title {
+  margin: 0 0 8px;
+  letter-spacing: 0.18em;
+  font-size: 0.86rem;
+}
+
+.non-euclidean-copy {
+  margin: 0 0 10px;
+  color: #bcb2a4;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.non-euclidean-demo-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.non-euclidean-demo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid rgba(199, 174, 136, 0.22);
+  background: rgba(20, 16, 14, 0.62);
+  color: #e7dcc9;
+  text-decoration: none;
+}
+
+.non-euclidean-demo-card:hover {
+  border-color: rgba(232, 207, 164, 0.48);
+  background: rgba(28, 22, 18, 0.78);
+}
+
+.non-euclidean-demo-heading {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+}
+
+.non-euclidean-demo-subtitle,
+.non-euclidean-demo-source,
+.non-euclidean-demo-status {
+  font-size: 0.76rem;
+  color: #bcb2a4;
+}
+
+.non-euclidean-demo-status {
+  margin-top: 6px;
+  text-transform: lowercase;
+  color: #8fd3ff;
+}
+
+.non-euclidean-links {
+  display: flex;
+  gap: 14px;
+  margin-top: 12px;
+  pointer-events: auto;
+}
+
+.non-euclidean-links a {
+  color: #8fd3ff;
+  text-decoration: none;
+  font-size: 0.78rem;
+  text-transform: lowercase;
+}
+
+.non-euclidean-links a:hover {
+  color: #d8eefc;
+}
+
+@media (max-width: 700px) {
+  .non-euclidean-ui {
+    top: auto;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    max-width: none;
+  }
+
+  .non-euclidean-ui--hub {
+    right: auto;
+    bottom: auto;
+  }
+}

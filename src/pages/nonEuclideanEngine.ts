@@ -62,7 +62,6 @@ void main() {
 
 const portalFragmentShader = `
 #include <common>
-#include <colorspace_pars_fragment>
 
 uniform sampler2D tex;
 uniform vec3 fallbackColor;

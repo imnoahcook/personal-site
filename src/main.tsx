@@ -6,6 +6,7 @@ import './index.css'
 import Layout from './components/Layout'
 import Main from './pages/Main'
 
+const Portal = lazy(() => import('./pages/Portal'))
 const Inspection = lazy(() => import('./pages/Inspection'))
 const NonEuclidean = lazy(() => import('./pages/NonEuclidean'))
 const NonEuclideanLevel1 = lazy(() => import('./pages/NonEuclideanLevel1'))
@@ -21,6 +22,11 @@ createRoot(document.getElementById('root')!).render(
         <Route element={<Layout />}>
           <Route path="/" element={<Main />} />
           <Route path="/portal" element={<Navigate replace to="/non-euclidean/level2-3" />} />
+          <Route path="/vault/porcelain-gate-7e9b13" element={
+            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading portal...</div>}>
+              <Portal />
+            </Suspense>
+          } />
           <Route path="/inspection" element={
             <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading inspection...</div>}>
               <Inspection />

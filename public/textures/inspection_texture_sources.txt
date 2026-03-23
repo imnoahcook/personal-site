@@ -1,0 +1,5 @@
+Ground texture source:
+- Poly Haven Asphalt 03 (CC0): https://polyhaven.com/a/asphalt_03
+- Downloaded diffuse JPG 2K from: https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/asphalt_03/asphalt_03_diff_2k.jpg
+Sky texture source:
+- Existing local star GIF reused from main route: /fp-img/spacewithstars.gif

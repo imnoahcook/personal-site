@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import { PointerLockControls } from '@react-three/drei'
@@ -29,6 +29,7 @@ import {
 import type { PortalRuntime } from './nonEuclideanEngine'
 
 const PLAYER_SPEED = 2.9
+const SPRINT_MULTIPLIER = 1.75
 const RECURSION_DEPTH = 4
 const PORTAL_RENDER_SIZE = 1024
 const keyState: Record<string, boolean> = {}
@@ -37,7 +38,7 @@ const TUNNEL_ONE_POSITION = new THREE.Vector3(-2.4, 0, -1.8)
 const TUNNEL_ONE_SCALE = new THREE.Vector3(1, 1, 4.8)
 const TUNNEL_TWO_POSITION = new THREE.Vector3(2.4, 0, 0)
 const TUNNEL_TWO_SCALE = new THREE.Vector3(1, 1, 0.6)
-const GROUND_SCALE = new THREE.Vector3(12, 1, 12)
+const GROUND_SCALE = new THREE.Vector3(120, 1, 120)
 
 const PORTAL_ONE_POSITION = new THREE.Vector3(-2.4, 1, 3)
 const PORTAL_TWO_POSITION = new THREE.Vector3(2.4, 1, 0.6)
@@ -58,14 +59,23 @@ function createRenderTargets() {
 }
 
 interface Level1WorldProps {
+  onCameraChange: (cameraState: CameraState) => void
   spawnOverride: ReturnType<typeof resolveCameraOverride>
+}
+
+interface CameraState {
+  pitch: number
+  x: number
+  y: number
+  yaw: number
+  z: number
 }
 
 function setCameraSpawn(camera: THREE.PerspectiveCamera, spawnOverride: ReturnType<typeof resolveCameraOverride>) {
   applyCameraOverride(camera, spawnOverride)
 }
 
-function Level1World({ spawnOverride }: Level1WorldProps) {
+function Level1World({ onCameraChange, spawnOverride }: Level1WorldProps) {
   const { camera, gl, scene } = useThree()
   const tunnelSource = useLoader(THREE.FileLoader, '/non-euclidean/engine/tunnel.obj') as string
   const groundSource = useLoader(THREE.FileLoader, '/non-euclidean/engine/ground.obj') as string
@@ -108,13 +118,21 @@ function Level1World({ spawnOverride }: Level1WorldProps) {
   const portalMaterialFour = useMemo(() => createPortalMaterial(), [])
   const previousPosition = useRef(new THREE.Vector3(0, PLAYER_HEIGHT, 5))
   const blockedPortalIndex = useRef<number | null>(null)
+  const cameraSampleTimer = useRef(0)
 
   useEffect(() => {
     setupTexture(tunnelTexture)
-    setupTexture(groundTexture, 12, 12)
+    setupTexture(groundTexture, 120, 120)
     setupTexture(skyTexture)
     setCameraSpawn(camera as THREE.PerspectiveCamera, spawnOverride)
     previousPosition.current.copy((camera as THREE.PerspectiveCamera).position)
+    onCameraChange({
+      pitch: (camera as THREE.PerspectiveCamera).rotation.x,
+      x: (camera as THREE.PerspectiveCamera).position.x,
+      y: (camera as THREE.PerspectiveCamera).position.y,
+      yaw: (camera as THREE.PerspectiveCamera).rotation.y,
+      z: (camera as THREE.PerspectiveCamera).position.z,
+    })
     portalOneRef.current?.layers.set(PORTAL_LAYER)
     portalTwoRef.current?.layers.set(PORTAL_LAYER)
     portalThreeRef.current?.layers.set(PORTAL_LAYER)
@@ -168,7 +186,7 @@ function Level1World({ spawnOverride }: Level1WorldProps) {
     previousPosition.current.copy(activeCamera.position)
     const { forward, side } = getMovementBasis(activeCamera)
 
-    const moveStep = PLAYER_SPEED * delta
+    const moveStep = PLAYER_SPEED * (keyState.ShiftLeft || keyState.ShiftRight ? SPRINT_MULTIPLIER : 1) * delta
     if (keyState.KeyW) movePlayerCamera(activeCamera, forward.x * moveStep, forward.z * moveStep, colliders)
     if (keyState.KeyS) movePlayerCamera(activeCamera, -forward.x * moveStep, -forward.z * moveStep, colliders)
     if (keyState.KeyA) movePlayerCamera(activeCamera, side.x * moveStep, side.z * moveStep, colliders)
@@ -217,6 +235,18 @@ function Level1World({ spawnOverride }: Level1WorldProps) {
     updateCameraNearFromPortals(activeCamera, portals)
     renderRecursivePortals(renderer, scene, activeCamera, portals, RECURSION_DEPTH)
     setRendererXrEnabled(renderer, xrEnabled)
+
+    cameraSampleTimer.current += delta
+    if (cameraSampleTimer.current >= 0.1) {
+      cameraSampleTimer.current = 0
+      onCameraChange({
+        pitch: activeCamera.rotation.x,
+        x: activeCamera.position.x,
+        y: activeCamera.position.y,
+        yaw: activeCamera.rotation.y,
+        z: activeCamera.position.z,
+      })
+    }
   }, 1)
 
   return (
@@ -260,6 +290,13 @@ function Level1World({ spawnOverride }: Level1WorldProps) {
 
 export default function NonEuclideanLevel1() {
   const params = useParams()
+  const [cameraState, setCameraState] = useState<CameraState>({
+    pitch: 0,
+    x: 0,
+    y: PLAYER_HEIGHT,
+    yaw: 0,
+    z: 5,
+  })
   const spawnOverride = useMemo(
     () => resolveCameraOverride(new THREE.Vector3(0, PLAYER_HEIGHT, 5), 0, 0, params),
     [params],
@@ -272,24 +309,18 @@ export default function NonEuclideanLevel1() {
           camera={{ fov: ENGINE_FOV, near: 0.05, far: 300, position: [0, PLAYER_HEIGHT, 5] }}
           gl={{ antialias: false }}
         >
-          <Level1World spawnOverride={spawnOverride} />
+          <Level1World onCameraChange={setCameraState} spawnOverride={spawnOverride} />
         </Canvas>
       </div>
 
       <div className="non-euclidean-ui">
         <p className="non-euclidean-title">LEVEL1</p>
         <p className="non-euclidean-copy">
-          Port of the original two-tunnel demo from `Level1.cpp`, using `tunnel.obj`, `ground.obj`,
-          `checker_gray.bmp`, and `checker_green.bmp`.
-        </p>
-        <p className="non-euclidean-copy">
-          The front tunnel door connects to the short tunnel, and the rear tunnel door connects as the return
-          path, matching the engine&apos;s first topology test.
+          current position: x={cameraState.x.toFixed(3)} y={cameraState.y.toFixed(3)} z={cameraState.z.toFixed(3)} yaw={cameraState.yaw.toFixed(4)} pitch={cameraState.pitch.toFixed(4)}
         </p>
 
         <div className="non-euclidean-links">
           <Link to="/non-euclidean">all demos</Link>
-          <Link to="/non-euclidean/level2-3">level2(3)</Link>
         </div>
       </div>
     </div>

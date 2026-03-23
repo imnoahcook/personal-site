@@ -80,6 +80,15 @@
   background: rgba(28, 22, 18, 0.78);
 }
 
+.non-euclidean-demo-card--todo {
+  opacity: 0.72;
+}
+
+.non-euclidean-demo-card--todo:hover {
+  border-color: rgba(199, 174, 136, 0.22);
+  background: rgba(20, 16, 14, 0.62);
+}
+
 .non-euclidean-demo-heading {
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -97,6 +106,10 @@
   margin-top: 6px;
   text-transform: lowercase;
   color: #8fd3ff;
+}
+
+.non-euclidean-demo-status--todo {
+  color: #d6a36e;
 }
 
 .non-euclidean-links {

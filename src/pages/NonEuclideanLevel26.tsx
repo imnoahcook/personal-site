@@ -36,6 +36,7 @@ const FIXED_DT = 0.002
 const MAX_STEPS = 30
 const WALK_SPEED = 2.9
 const WALK_ACCEL = 50
+const SPRINT_MULTIPLIER = 1.75
 const PLAYER_DRAG = 0.002
 const GROUND_FRICTION = 0.04
 const MOUSE_SENSITIVITY = 0.005
@@ -379,6 +380,9 @@ function Level26World({ onCameraChange, onLockChange, onReady, renderPortals, sp
 
       let moveForward = 0
       let moveLeft = 0
+      const sprinting = Boolean(pressedKeys.current.ShiftLeft || pressedKeys.current.ShiftRight)
+      const targetSpeed = WALK_SPEED * (sprinting ? SPRINT_MULTIPLIER : 1)
+      const targetAccel = WALK_ACCEL * (sprinting ? SPRINT_MULTIPLIER : 1)
       if (pressedKeys.current.KeyW) moveForward += 1
       if (pressedKeys.current.KeyS) moveForward -= 1
       if (pressedKeys.current.KeyA) moveLeft += 1
@@ -396,11 +400,11 @@ function Level26World({ onCameraChange, onLockChange, onReady, renderPortals, sp
         moveLeft * Math.sin(yaw.current) - moveForward * Math.cos(yaw.current),
       )
 
-      velocity.current.addScaledVector(tempMove, WALK_ACCEL * FIXED_DT)
+      velocity.current.addScaledVector(tempMove, targetAccel * FIXED_DT)
 
       tempStep.set(velocity.current.x, 0, velocity.current.z)
-      if (tempStep.lengthSq() > WALK_SPEED * WALK_SPEED) {
-        tempStep.setLength(WALK_SPEED)
+      if (tempStep.lengthSq() > targetSpeed * targetSpeed) {
+        tempStep.setLength(targetSpeed)
         velocity.current.x = tempStep.x
         velocity.current.z = tempStep.z
       }
@@ -564,7 +568,6 @@ export default function NonEuclideanLevel26() {
     yaw: 0,
     z: 3,
   })
-  const [isLocked, setIsLocked] = useState(false)
   const spawnOverride = useMemo(
     () => resolveCameraOverride(new THREE.Vector3(3, PLAYER_HEIGHT, 3), 0, 0, { x, y, z, yaw, pitch }),
     [pitch, x, y, yaw, z],
@@ -583,6 +586,8 @@ export default function NonEuclideanLevel26() {
     document.body.dataset.nonEuclideanReady = '1'
   }, [])
 
+  const handleLockChange = useCallback(() => {}, [])
+
   return (
     <div className="non-euclidean-page">
       <div className="non-euclidean-viewport">
@@ -593,7 +598,7 @@ export default function NonEuclideanLevel26() {
         >
           <Level26World
             onCameraChange={setCameraState}
-            onLockChange={setIsLocked}
+            onLockChange={handleLockChange}
             onReady={handleReady}
             renderPortals={renderPortals}
             spawnOverride={spawnOverride}
@@ -604,24 +609,11 @@ export default function NonEuclideanLevel26() {
       {!hideHud && <div className="non-euclidean-ui">
         <p className="non-euclidean-title">LEVEL2(6)</p>
         <p className="non-euclidean-copy">
-          Port of the six-room `Level2.cpp` variant: two `square_rooms.obj` houses, the original
-          `three_room.bmp` and `three_room2.bmp` textures, the same spawn, and the same three-portal
-          front/back chain between Door4, Door3, and Door1.
-        </p>
-        <p className="non-euclidean-copy">
-          Click inside the viewport to lock. Mouse look, acceleration, drag, friction, and head bob
-          follow the same fixed-step player loop used for the faithful `Level2(3)` pass.
-        </p>
-        <p className="non-euclidean-copy">
-          mouse: {isLocked ? 'locked' : 'unlocked'} | camera: x={cameraState.x.toFixed(3)} y={cameraState.y.toFixed(3)} z={cameraState.z.toFixed(3)} yaw={cameraState.yaw.toFixed(4)} pitch={cameraState.pitch.toFixed(4)}
-        </p>
-        <p className="non-euclidean-copy">
-          route: /non-euclidean/level2-6/{cameraState.x.toFixed(3)}/{cameraState.y.toFixed(3)}/{cameraState.z.toFixed(3)}/{cameraState.yaw.toFixed(4)}/{cameraState.pitch.toFixed(4)}
+          current position: x={cameraState.x.toFixed(3)} y={cameraState.y.toFixed(3)} z={cameraState.z.toFixed(3)} yaw={cameraState.yaw.toFixed(4)} pitch={cameraState.pitch.toFixed(4)}
         </p>
 
         <div className="non-euclidean-links">
           <Link to="/non-euclidean">all demos</Link>
-          <Link to="/non-euclidean/level2-3">level2(3)</Link>
         </div>
       </div>}
     </div>

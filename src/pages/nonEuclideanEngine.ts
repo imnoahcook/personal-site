@@ -28,6 +28,7 @@ export const NEAR_MIN = 1e-3
 export const NEAR_MAX = 1e-1
 export const WORLD_LAYER = 0
 export const PORTAL_LAYER = 1
+const PORTAL_TRAVERSE_OFFSET = 5 * NEAR_MIN
 const COLLIDER_THICKNESS = 0.08
 
 const tempSourceInverse = new THREE.Matrix4()
@@ -617,7 +618,7 @@ export function tryTraversePortal(
   const portalPosition = source.getWorldPosition(tempPortalPosition)
   const portalNormal = getPortalNormal(source).clone()
   tempPortalBump.copy(portalNormal).multiplyScalar(prevPosition.clone().sub(portalPosition).dot(portalNormal) > 0 ? 1 : -1)
-  tempPortalBump.multiplyScalar(2 * NEAR_MIN)
+  tempPortalBump.multiplyScalar(PORTAL_TRAVERSE_OFFSET)
 
   tempPrevWorld.copy(prevPosition)
   tempCurWorld.copy(currentPosition)
@@ -651,6 +652,16 @@ export function tryTraversePortal(
 
   tempClosestPoint.copy(currentPosition).addScaledVector(tempPortalBump, -2)
   tempClosestPoint.applyMatrix4(tempWarpMatrix)
+  target.updateWorldMatrix(true, false)
+  target.getWorldPosition(tempPortalPosition)
+  const targetNormal = getPortalNormal(target).clone()
+  const exitDistance = tempToPortal.copy(tempClosestPoint).sub(tempPortalPosition).dot(targetNormal)
+  if (Math.abs(exitDistance) < PORTAL_PUSH) {
+    tempClosestPoint.addScaledVector(
+      targetNormal,
+      (exitDistance >= 0 ? 1 : -1) * (PORTAL_PUSH - Math.abs(exitDistance)),
+    )
+  }
   getPortalWarpMatrix(source, target, camera.matrixWorld, tempWarpMatrix)
   tempWarpMatrix.decompose(tempPortalPosition, camera.quaternion, tempScale)
   camera.position.copy(tempClosestPoint)
@@ -670,6 +681,14 @@ function setPortalTexture(mesh: THREE.Mesh, texture: THREE.Texture | null) {
   material.uniforms.useTexture.value = texture !== null
 }
 
+function getPortalTextureState(mesh: THREE.Mesh) {
+  const material = mesh.material as THREE.ShaderMaterial
+  return {
+    tex: material.uniforms.tex.value as THREE.Texture | null,
+    useTexture: Boolean(material.uniforms.useTexture.value),
+  }
+}
+
 function renderSceneRecursive(
   renderer: THREE.WebGLRenderer,
   scene: THREE.Scene,
@@ -683,6 +702,8 @@ function renderSceneRecursive(
   const originalCameraMask = camera.layers.mask
   const originalAutoClear = renderer.autoClear
   const originalBackground = scene.background
+  const savedPortalStates = portals.map((portal) => getPortalTextureState(portal.mesh))
+  const nextPortalTextures = portals.map(() => null as THREE.Texture | null)
   const allowNestedPortals = renderTarget === null
   const hiddenIndices: number[] = []
   if (skipIndex >= 0) {
@@ -708,13 +729,18 @@ function renderSceneRecursive(
         portal.renderTargets[depth - 1],
         rootExtraClip,
       )
-      setPortalTexture(portal.mesh, portal.renderTargets[depth - 1].texture)
+      nextPortalTextures[index] = portal.renderTargets[depth - 1].texture
     }
   } else {
     for (let index = 0; index < portals.length; index += 1) {
       if (index === skipIndex) continue
-      setPortalTexture(portals[index].mesh, null)
+      nextPortalTextures[index] = null
     }
+  }
+
+  for (let index = 0; index < portals.length; index += 1) {
+    if (index === skipIndex) continue
+    setPortalTexture(portals[index].mesh, nextPortalTextures[index])
   }
 
   setRendererClippingPlanes(renderer, [])
@@ -734,6 +760,12 @@ function renderSceneRecursive(
 
   for (const index of hiddenIndices) {
     portals[index].mesh.visible = true
+  }
+  for (let index = 0; index < portals.length; index += 1) {
+    const savedState = savedPortalStates[index]
+    const material = portals[index].mesh.material as THREE.ShaderMaterial
+    material.uniforms.tex.value = savedState.tex
+    material.uniforms.useTexture.value = savedState.useTexture
   }
 }
 

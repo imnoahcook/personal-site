@@ -62,6 +62,12 @@ export default function NonEuclidean() {
           Route set based on the local `_context/NonEuclidean` engine. `Level1` and `Level2(3)` are the
           current live browser ports. The remaining demos stay wired as TODO routes for now.
         </p>
+        <p className="non-euclidean-copy">
+          Rebuilt in Three.js from the original C++ demo shown in{' '}
+          <a href="https://www.youtube.com/watch?v=kEB11PQ9Eo8" target="_blank" rel="noreferrer">
+            this YouTube video
+          </a>.
+        </p>
 
         <div className="non-euclidean-demo-list">
           {DEMOS.map((demo) => (

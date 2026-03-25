@@ -33,6 +33,9 @@ createRoot(document.getElementById('root')!).render(
             </Suspense>
           } />
           <Route path="/non-euclidean" element={
+            <Navigate replace to="/non-euclidean/level1" />
+          } />
+          <Route path="/non-euclidean/demos" element={
             <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
               <NonEuclidean />
             </Suspense>

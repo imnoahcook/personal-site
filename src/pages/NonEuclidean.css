@@ -32,7 +32,8 @@
   color: #e7dcc9;
   font-family: 'Space Mono', monospace;
   z-index: 2;
-  pointer-events: none;
+  pointer-events: auto;
+  user-select: text;
 }
 
 .non-euclidean-ui--hub {

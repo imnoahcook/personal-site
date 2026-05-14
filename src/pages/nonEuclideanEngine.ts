@@ -29,7 +29,9 @@ export const NEAR_MAX = 1e-1
 export const WORLD_LAYER = 0
 export const PORTAL_LAYER = 1
 const PORTAL_TRAVERSE_OFFSET = 5 * NEAR_MIN
+const PORTAL_RENDER_CLIP_OFFSET = 0.02
 const COLLIDER_THICKNESS = 0.08
+const WALKABLE_COLLIDER_NORMAL_Y = 0.45
 
 const tempSourceInverse = new THREE.Matrix4()
 const tempWarpMatrix = new THREE.Matrix4()
@@ -52,6 +54,8 @@ const tempCurWorld = new THREE.Vector3()
 const tempPortalXAxis = new THREE.Vector3()
 const tempPortalYAxis = new THREE.Vector3()
 const tempPortalBump = new THREE.Vector3()
+const tempPortalSourceScale = new THREE.Vector3()
+const tempPortalTargetScale = new THREE.Vector3()
 const portalVertexShader = `
 varying vec4 vClipPosition;
 
@@ -82,6 +86,37 @@ void main() {
 }
 `
 
+const atlasVertexShader = `
+attribute float uvTile;
+varying vec2 vUv;
+varying float vUvTile;
+
+void main() {
+  vUv = uv;
+  vUvTile = uvTile;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`
+
+const atlasFragmentShader = `
+#include <common>
+
+uniform sampler2D tex;
+uniform vec2 atlasGrid;
+varying vec2 vUv;
+varying float vUvTile;
+
+void main() {
+  float tile = floor(vUvTile + 0.5);
+  float tileX = mod(tile, atlasGrid.x);
+  float tileY = floor(tile / atlasGrid.x);
+  vec2 localUv = fract(vUv);
+  vec2 atlasUv = (vec2(tileX, tileY) + localUv) / atlasGrid;
+  vec4 color = vec4(texture2D(tex, atlasUv).rgb, 1.0);
+  gl_FragColor = linearToOutputTexel(color);
+}
+`
+
 export function createPortalMaterial() {
   return new THREE.ShaderMaterial({
     uniforms: {
@@ -92,6 +127,19 @@ export function createPortalMaterial() {
     fragmentShader: portalFragmentShader,
     toneMapped: false,
     vertexShader: portalVertexShader,
+  })
+}
+
+export function createAtlasTextureMaterial(texture: THREE.Texture, columns: number, rows: number) {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      atlasGrid: { value: new THREE.Vector2(columns, rows) },
+      tex: { value: texture },
+    },
+    fragmentShader: atlasFragmentShader,
+    side: THREE.DoubleSide,
+    toneMapped: false,
+    vertexShader: atlasVertexShader,
   })
 }
 
@@ -211,6 +259,7 @@ export function updateCameraNearFromPortals(camera: THREE.PerspectiveCamera, por
 function addTriangle(
   targetPositions: number[],
   targetUvs: number[],
+  targetUvTiles: number[],
   vertices: number[],
   uvs: number[],
   a: number,
@@ -233,9 +282,10 @@ function addTriangle(
       vertices[item.v * 3 + 2],
     )
     targetUvs.push(
-      uvs[item.uv * 2] ?? 0,
-      uvs[item.uv * 2 + 1] ?? 0,
+      uvs[item.uv * 3] ?? 0,
+      uvs[item.uv * 3 + 1] ?? 0,
     )
+    targetUvTiles.push(uvs[item.uv * 3 + 2] ?? 0)
   }
 }
 
@@ -246,11 +296,31 @@ function parseFaceToken(token: string) {
   return { vertexIndex, uvIndex }
 }
 
+function getTriangleNormalY(vertices: number[], indices: number[]) {
+  const ax = vertices[indices[0] * 3]
+  const ay = vertices[indices[0] * 3 + 1]
+  const az = vertices[indices[0] * 3 + 2]
+  const abx = vertices[indices[1] * 3] - ax
+  const aby = vertices[indices[1] * 3 + 1] - ay
+  const abz = vertices[indices[1] * 3 + 2] - az
+  const acx = vertices[indices[2] * 3] - ax
+  const acy = vertices[indices[2] * 3 + 1] - ay
+  const acz = vertices[indices[2] * 3 + 2] - az
+
+  const normalX = aby * acz - abz * acy
+  const normalY = abz * acx - abx * acz
+  const normalZ = abx * acy - aby * acx
+  const length = Math.hypot(normalX, normalY, normalZ)
+
+  return length > 0 ? normalY / length : 0
+}
+
 export function parseEngineMesh(source: string): EngineMeshData {
   const vertexPalette: number[] = []
   const uvPalette: number[] = []
   const positions: number[] = []
   const uvs: number[] = []
+  const uvTiles: number[] = []
   const colliders: Collider2D[] = []
 
   for (const rawLine of source.split(/\r?\n/)) {
@@ -264,15 +334,15 @@ export function parseEngineMesh(source: string): EngineMeshData {
     }
 
     if (line.startsWith('vt ')) {
-      const [u, v] = line.slice(3).trim().split(/\s+/).map(Number)
-      uvPalette.push(u, v)
+      const [u, v, tile = 0] = line.slice(3).trim().split(/\s+/).map(Number)
+      uvPalette.push(u, v, tile)
       continue
     }
 
     if (line.startsWith('f ')) {
       if (line === 'f **') {
         const vertexCount = vertexPalette.length / 3
-        const uvCount = uvPalette.length / 2
+        const uvCount = uvPalette.length / 3
         if (vertexCount < 4 || uvCount < 4) continue
 
         const a = vertexCount - 4
@@ -283,8 +353,8 @@ export function parseEngineMesh(source: string): EngineMeshData {
         const bt = uvCount - 3
         const ct = uvCount - 2
         const dt = uvCount - 1
-        addTriangle(positions, uvs, vertexPalette, uvPalette, a, b, c, at, bt, ct)
-        addTriangle(positions, uvs, vertexPalette, uvPalette, c, d, a, ct, dt, at)
+        addTriangle(positions, uvs, uvTiles, vertexPalette, uvPalette, a, b, c, at, bt, ct)
+        addTriangle(positions, uvs, uvTiles, vertexPalette, uvPalette, c, d, a, ct, dt, at)
         continue
       }
 
@@ -295,6 +365,7 @@ export function parseEngineMesh(source: string): EngineMeshData {
         addTriangle(
           positions,
           uvs,
+          uvTiles,
           vertexPalette,
           uvPalette,
           tokens[0].vertexIndex,
@@ -310,6 +381,7 @@ export function parseEngineMesh(source: string): EngineMeshData {
       addTriangle(
         positions,
         uvs,
+        uvTiles,
         vertexPalette,
         uvPalette,
         tokens[0].vertexIndex,
@@ -322,6 +394,7 @@ export function parseEngineMesh(source: string): EngineMeshData {
       addTriangle(
         positions,
         uvs,
+        uvTiles,
         vertexPalette,
         uvPalette,
         tokens[2].vertexIndex,
@@ -349,9 +422,11 @@ export function parseEngineMesh(source: string): EngineMeshData {
       const xs = indices.map((index) => vertexPalette[index * 3])
       const ys = indices.map((index) => vertexPalette[index * 3 + 1])
       const zs = indices.map((index) => vertexPalette[index * 3 + 2])
+      const normalY = getTriangleNormalY(vertexPalette, indices)
       const minY = Math.min(...ys)
       const maxY = Math.max(...ys)
 
+      if (Math.abs(normalY) > WALKABLE_COLLIDER_NORMAL_Y) continue
       if (maxY - minY < 0.1) continue
 
       let minX = Math.min(...xs)
@@ -375,6 +450,7 @@ export function parseEngineMesh(source: string): EngineMeshData {
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+  geometry.setAttribute('uvTile', new THREE.Float32BufferAttribute(uvTiles, 1))
   geometry.computeVertexNormals()
 
   return { geometry, colliders }
@@ -536,6 +612,19 @@ export function getPortalTargetIndex(portal: PortalRuntime, position: THREE.Vect
   return getPortalPlaneDistance(position, portal.mesh) > 0
     ? portal.frontTargetIndex
     : portal.backTargetIndex
+}
+
+export function getPortalPlaneScaleRatio(source: THREE.Object3D, target: THREE.Object3D) {
+  source.updateWorldMatrix(true, false)
+  target.updateWorldMatrix(true, false)
+
+  source.matrixWorld.decompose(tempPortalPosition, tempTargetQuat, tempPortalSourceScale)
+  target.matrixWorld.decompose(tempClosestPoint, tempTargetQuat, tempPortalTargetScale)
+
+  const sourceAreaScale = Math.max(Math.abs(tempPortalSourceScale.x * tempPortalSourceScale.y), 0.00001)
+  const targetAreaScale = Math.max(Math.abs(tempPortalTargetScale.x * tempPortalTargetScale.y), 0.00001)
+
+  return Math.sqrt(targetAreaScale / sourceAreaScale)
 }
 
 export function updatePortalCamera(
@@ -719,6 +808,7 @@ function renderSceneRecursive(
       const targetIndex = getPortalTargetIndex(portal, camera.position)
       const target = portals[targetIndex]
       updatePortalCamera(portal.mesh, target.mesh, camera, portal.camera)
+      applyPortalObliqueClip(portal.camera, portal.camera, target.mesh, Math.min(rootExtraClip, PORTAL_RENDER_CLIP_OFFSET))
       renderSceneRecursive(
         renderer,
         scene,

@@ -429,15 +429,13 @@ function TabContent({ tab }: { tab: Tab }) {
           <div className="section">
             <h2 className="heading">who am i?</h2>
             <p className="text">
-              i&apos;m noah. developer, creator, explorer. i spend most of my time
-              building things for the internet — from full-stack web apps to generative
-              art to AI systems.            </p>
+              I&apos;m Noah, a developer. I&apos;ve spent most of my professional career working
+              at startups, but I also have experience working at Instagram and Google.
+            </p>
           </div>
           <div className="section">
             <h2 className="heading">fun facts</h2>
             <ul className="link-list">
-              <li className="text">{'>> '}i&apos;ve been writing code since i was a kid</li>
-              <li className="text">{'>> '}my favorite color is whatever #00ff99 is</li>
               <li className="text">{'>> '}i code with Comic Sans</li>
             </ul>
           </div>

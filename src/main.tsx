@@ -11,6 +11,9 @@ const Inspection = lazy(() => import('./pages/Inspection'))
 const NonEuclidean = lazy(() => import('./pages/NonEuclidean'))
 const NonEuclideanLevel1 = lazy(() => import('./pages/NonEuclideanLevel1'))
 const NonEuclideanLevel23 = lazy(() => import('./pages/NonEuclideanLevel23'))
+const NonEuclideanLevel26 = lazy(() => import('./pages/NonEuclideanLevel26'))
+const NonEuclideanLevel3 = lazy(() => import('./pages/NonEuclideanLevel3'))
+const NonEuclideanLevel6 = lazy(() => import('./pages/NonEuclideanLevel6'))
 const NonEuclideanStub = lazy(() => import('./pages/NonEuclideanStub'))
 
 const queryClient = new QueryClient()
@@ -33,7 +36,9 @@ createRoot(document.getElementById('root')!).render(
             </Suspense>
           } />
           <Route path="/non-euclidean" element={
-            <Navigate replace to="/non-euclidean/level1" />
+            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
+              <NonEuclidean />
+            </Suspense>
           } />
           <Route path="/non-euclidean/demos" element={
             <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
@@ -62,22 +67,22 @@ createRoot(document.getElementById('root')!).render(
           } />
           <Route path="/non-euclidean/level2-6" element={
             <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanStub title="Level2(6)" source="Level2.cpp" />
+              <NonEuclideanLevel26 />
             </Suspense>
           } />
           <Route path="/non-euclidean/level2-6/:x/:y/:z/:yaw/:pitch" element={
             <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanStub title="Level2(6)" source="Level2.cpp" />
+              <NonEuclideanLevel26 />
             </Suspense>
           } />
           <Route path="/non-euclidean/level3" element={
             <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanStub title="Level3" source="Level3.cpp" />
+              <NonEuclideanLevel3 />
             </Suspense>
           } />
           <Route path="/non-euclidean/level3/:x/:y/:z/:yaw/:pitch" element={
             <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanStub title="Level3" source="Level3.cpp" />
+              <NonEuclideanLevel3 />
             </Suspense>
           } />
           <Route path="/non-euclidean/level4" element={
@@ -102,12 +107,12 @@ createRoot(document.getElementById('root')!).render(
           } />
           <Route path="/non-euclidean/level6" element={
             <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanStub title="Level6" source="Level6.cpp" />
+              <NonEuclideanLevel6 />
             </Suspense>
           } />
           <Route path="/non-euclidean/level6/:x/:y/:z/:yaw/:pitch" element={
             <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanStub title="Level6" source="Level6.cpp" />
+              <NonEuclideanLevel6 />
             </Suspense>
           } />
         </Route>

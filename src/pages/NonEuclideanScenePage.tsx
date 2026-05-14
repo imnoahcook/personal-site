@@ -5,9 +5,11 @@ import * as THREE from 'three'
 import './NonEuclidean.css'
 import {
   carvePortalColliderOpening,
+  createAtlasTextureMaterial,
   createPortalMaterial,
   ENGINE_FOV,
   getPortalPlaneDistance,
+  getPortalPlaneScaleRatio,
   getPortalTargetIndex,
   PLAYER_HEIGHT,
   PLAYER_RADIUS,
@@ -38,12 +40,20 @@ const BOB_OFFS = 0.015
 const BOB_DAMP = 0.04
 const BOB_MIN = 0.1
 const TAU = Math.PI * 2
+const SCALE_TRANSITION_MIN_RATIO_DELTA = 0.04
+const SCALE_TRANSITION_MIN_ZOOM = 0.45
+const SCALE_TRANSITION_MAX_ZOOM = 2.25
 const PORTAL_GEOMETRY_SOURCE = '/non-euclidean/engine/double_quad.obj'
 const PLAYER_CUBE_SIZE = new THREE.Vector3(0.45, 0.9, 0.45)
 const PLAYER_CUBE_EYE_OFFSET = 0.95
 
 const tempMove = new THREE.Vector3()
 const tempStep = new THREE.Vector3()
+
+interface TextureAtlasConfig {
+  columns: number
+  rows: number
+}
 
 export interface SceneMeshConfig {
   id: string
@@ -53,6 +63,7 @@ export interface SceneMeshConfig {
   scale: THREE.Vector3
   source: string
   texture?: string
+  textureAtlas?: TextureAtlasConfig
   textureRepeat?: [number, number]
 }
 
@@ -74,6 +85,7 @@ export interface NonEuclideanSceneConfig {
   recursionDepth?: number
   routeBase: string
   sampleCameraHeight?: (x: number, z: number) => number
+  scaleTransitionDuration?: number
   skyTexture?: string
   showPlayerCube?: boolean
   spawnPitch?: number
@@ -199,11 +211,32 @@ function SpaceSky({ texture }: { texture: THREE.Texture }) {
   )
 }
 
+function MeshTextureMaterial({ atlas, texture }: { atlas?: TextureAtlasConfig; texture?: THREE.Texture }) {
+  const atlasColumns = atlas?.columns ?? 1
+  const atlasRows = atlas?.rows ?? 1
+  const atlasMaterial = useMemo(() => (
+    texture && atlas
+      ? createAtlasTextureMaterial(texture, atlasColumns, atlasRows)
+      : null
+  ), [atlas, atlasColumns, atlasRows, texture])
+
+  useEffect(() => () => {
+    atlasMaterial?.dispose()
+  }, [atlasMaterial])
+
+  if (atlasMaterial) {
+    return <primitive object={atlasMaterial} attach="material" />
+  }
+
+  return <meshBasicMaterial map={texture} toneMapped={false} side={THREE.DoubleSide} />
+}
+
 function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPortals, spawnOverride }: SceneWorldProps) {
   const { camera, gl, scene } = useThree()
   const recursionDepth = config.recursionDepth ?? 4
   const portalRenderSize = config.portalRenderSize ?? 1024
   const bodyHeight = config.playerHeight ?? PLAYER_HEIGHT
+  const scaleTransitionDuration = config.scaleTransitionDuration ?? 0
   const uniqueMeshSources = useMemo(() => (
     Array.from(new Set([...config.meshes.map((mesh) => mesh.source), PORTAL_GEOMETRY_SOURCE]))
   ), [config.meshes])
@@ -284,6 +317,8 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
   const lockedRef = useRef(false)
   const cameraEuler = useRef(new THREE.Euler(0, 0, 0, 'YXZ'))
   const blockedPortalIndex = useRef<number | null>(null)
+  const scaleTransitionElapsed = useRef(Infinity)
+  const scaleTransitionStartZoom = useRef(1)
   const activeCameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const domElementRef = useRef<HTMLCanvasElement | null>(null)
 
@@ -328,7 +363,11 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
     mouseDelta.current.y = 0
     activeCamera.position.copy(spawnOverride.position)
     activeCamera.rotation.set(spawnOverride.pitch, spawnOverride.yaw, 0)
+    activeCamera.zoom = 1
+    activeCamera.updateProjectionMatrix()
     activeCamera.updateMatrixWorld(true)
+    scaleTransitionElapsed.current = Infinity
+    scaleTransitionStartZoom.current = 1
 
     for (const mesh of portalMeshes.current) {
       mesh?.layers.set(PORTAL_LAYER)
@@ -538,6 +577,9 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
           previousBodyPosition.current,
         )
         const targetMesh = portalMeshes.current[targetIndex]
+        const scaleRatio = targetMesh
+          ? getPortalPlaneScaleRatio(sourceMesh, targetMesh)
+          : 1
         traversed = tryTraversePortal(
           previousBodyPosition.current,
           bodyPosition.current,
@@ -549,6 +591,20 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
 
         if (traversed) {
           blockedPortalIndex.current = targetIndex
+
+          if (
+            scaleTransitionDuration > 0 &&
+            Math.abs(Math.log(scaleRatio)) > SCALE_TRANSITION_MIN_RATIO_DELTA
+          ) {
+            scaleTransitionElapsed.current = 0
+            scaleTransitionStartZoom.current = THREE.MathUtils.clamp(
+              1 / scaleRatio,
+              SCALE_TRANSITION_MIN_ZOOM,
+              SCALE_TRANSITION_MAX_ZOOM,
+            )
+            activeCamera.zoom = scaleTransitionStartZoom.current
+            activeCamera.updateProjectionMatrix()
+          }
         }
       }
 
@@ -564,6 +620,17 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
       cameraEuler.current.setFromQuaternion(activeCamera.quaternion, 'YXZ')
       yaw.current = wrapAngle(cameraEuler.current.y)
       pitch.current = clampPitch(cameraEuler.current.x)
+    }
+
+    if (scaleTransitionDuration > 0 && scaleTransitionElapsed.current < scaleTransitionDuration) {
+      scaleTransitionElapsed.current = Math.min(scaleTransitionElapsed.current + delta, scaleTransitionDuration)
+      const progress = scaleTransitionElapsed.current / scaleTransitionDuration
+      const eased = progress * progress * (3 - 2 * progress)
+      activeCamera.zoom = THREE.MathUtils.lerp(scaleTransitionStartZoom.current, 1, eased)
+      activeCamera.updateProjectionMatrix()
+    } else if (activeCamera.zoom !== 1) {
+      activeCamera.zoom = 1
+      activeCamera.updateProjectionMatrix()
     }
 
     activeCamera.rotation.order = 'YXZ'
@@ -642,7 +709,7 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
             rotation={mesh.rotation}
             scale={mesh.scale}
           >
-            <meshBasicMaterial map={texture} toneMapped={false} side={THREE.DoubleSide} />
+            <MeshTextureMaterial atlas={mesh.textureAtlas} texture={texture} />
           </mesh>
         )
       })}

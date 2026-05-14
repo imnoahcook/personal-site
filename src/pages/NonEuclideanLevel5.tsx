@@ -11,6 +11,7 @@ const config: NonEuclideanSceneConfig = {
   skyTexture: SPACE_SKY,
   cameraFar: 320,
   portalRenderSize: 1024,
+  scaleTransitionDuration: 0.55,
   spawnPosition: new THREE.Vector3(0, 1.5, 5),
   meshes: [
     { id: 'ground1', source: '/non-euclidean/engine/ground.obj', texture: '/non-euclidean/engine/checker_green.bmp', position: new THREE.Vector3(0, 0, 0), scale: new THREE.Vector3(12, 1.2, 12), textureRepeat: [12, 12] },

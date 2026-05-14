@@ -432,6 +432,9 @@ function TabContent({ tab }: { tab: Tab }) {
               I&apos;m Noah, a developer. I&apos;ve spent most of my professional career working
               at startups, but I also have experience working at Instagram and Google.
             </p>
+            <p className="text">
+              I took the assets for this website from a singer I like.
+            </p>
           </div>
           <div className="section">
             <h2 className="heading">fun facts</h2>

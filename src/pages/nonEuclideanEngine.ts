@@ -664,7 +664,7 @@ export function applyPortalObliqueClip(
   }
 
   const clipPoint = portalPosition.clone().sub(normal.clone().multiplyScalar(extraClip))
-  const clipNormal = normal.clone().multiplyScalar(-1)
+  const clipNormal = normal.clone()
 
   tempClipPlane.setFromNormalAndCoplanarPoint(clipNormal, clipPoint)
   tempClipPlane.applyMatrix4(sourceCamera.matrixWorldInverse)

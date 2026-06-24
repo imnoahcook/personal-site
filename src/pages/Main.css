@@ -75,9 +75,9 @@
 }
 
 .marquee {
-  display: flex;
+  display: inline-block;
   white-space: nowrap;
-  animation: marquee-scroll 20s linear infinite;
+  animation: marquee-ltr 12s linear infinite;
   font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
   font-size: 14px;
   color: #ffff00;
@@ -85,12 +85,11 @@
 
 .marquee span {
   display: inline-block;
-  min-width: 100vw;
 }
 
-@keyframes marquee-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+@keyframes marquee-ltr {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100vw); }
 }
 
 /* Main layout */

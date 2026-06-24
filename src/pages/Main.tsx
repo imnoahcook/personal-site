@@ -332,38 +332,6 @@ function RetroPiano() {
 
 function ScaredPortal() {
   const [opened, setOpened] = useState(false)
-  const btnRef = useRef<HTMLButtonElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const pos = useRef({ x: 0, y: 0 })
-
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    const btn = btnRef.current
-    const container = containerRef.current
-    if (!btn || !container || opened) return
-
-    const btnRect = btn.getBoundingClientRect()
-    const containerRect = container.getBoundingClientRect()
-    const btnCx = btnRect.left + btnRect.width / 2
-    const btnCy = btnRect.top + btnRect.height / 2
-    const dx = btnCx - e.clientX
-    const dy = btnCy - e.clientY
-    const dist = Math.sqrt(dx * dx + dy * dy)
-
-    if (dist < 120) {
-      const flee = 40
-      const angle = Math.atan2(dy, dx)
-      let newX = pos.current.x + Math.cos(angle) * flee
-      let newY = pos.current.y + Math.sin(angle) * flee
-
-      const maxX = (containerRect.width - btnRect.width) / 2
-      const maxY = (containerRect.height - btnRect.height) / 2
-      newX = Math.max(-maxX, Math.min(maxX, newX))
-      newY = Math.max(-maxY, Math.min(maxY, newY))
-
-      pos.current = { x: newX, y: newY }
-      btn.style.transform = `translate(${newX}px, ${newY}px)`
-    }
-  }, [opened])
 
   if (opened) {
     return (
@@ -377,14 +345,9 @@ function ScaredPortal() {
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="portal-section portal-scared"
-      onPointerMove={onPointerMove}
-    >
+    <div className="portal-section portal-scared">
       <p className="portal-text">do you want to open the portal?</p>
       <button
-        ref={btnRef}
         className="portal-scared-btn"
         onClick={() => setOpened(true)}
       >
@@ -506,8 +469,7 @@ export default function Main() {
 
       <div className="marquee-container">
         <div className="marquee">
-          <span>hi!&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-          <span>hi!&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span>welcome to my site</span>
         </div>
       </div>
 

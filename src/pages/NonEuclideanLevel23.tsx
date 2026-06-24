@@ -570,6 +570,13 @@ export default function NonEuclideanLevel23() {
           current position: x={cameraState.x.toFixed(3)} y={cameraState.y.toFixed(3)} z={cameraState.z.toFixed(3)} yaw={cameraState.yaw.toFixed(4)} pitch={cameraState.pitch.toFixed(4)}
         </p>
 
+        <p className="non-euclidean-copy">
+          I was interested in making something like this after reading a novel called House of Leaves. If you don't find this demo weird at all, go back into the house and count the number of rooms.
+        </p>
+        <p className="non-euclidean-copy">
+          I found out how to make this from a YouTube video but ported his C++ code to JS.
+        </p>
+
         <div className="non-euclidean-links">
           <Link to="/non-euclidean">all demos</Link>
         </div>

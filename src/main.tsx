@@ -24,7 +24,7 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Main />} />
-          <Route path="/portal" element={<Navigate replace to="/non-euclidean/level2-3" />} />
+          <Route path="/portal" element={<Navigate replace to="/non-euclidean/level6" />} />
           <Route path="/vault/porcelain-gate-7e9b13" element={
             <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading portal...</div>}>
               <Portal />

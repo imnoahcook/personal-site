@@ -337,7 +337,7 @@ function ScaredPortal() {
     return (
       <div className="portal-section">
         <p className="portal-text">the portal has opened, will you enter it?</p>
-        <a href="/non-euclidean/level2-3" className="portal-link">
+        <a href="/non-euclidean/level6" className="portal-link">
           <img src="/icons/portal.gif" alt="portal" className="portal-img" />
         </a>
       </div>

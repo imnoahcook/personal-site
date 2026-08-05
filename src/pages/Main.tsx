@@ -419,7 +419,7 @@ function TabContent({ tab }: { tab: Tab }) {
         <>
           <h1 className="title">art</h1>
           <div className="section">
-            <p className="text">i can&apos;t draw</p>
+            <p className="text">enjoy some gradients</p>
           </div>
           <div className="section">
             <h2 className="heading">gallery</h2>
@@ -458,6 +458,33 @@ function TabContent({ tab }: { tab: Tab }) {
 
 export default function Main() {
   const [activeTab, setActiveTab] = useState<Tab>('home')
+  const marqueeRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = marqueeRef.current
+    if (!el) return
+    console.log(
+      '[marquee] prefers-reduced-motion:',
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
+    const logStart = () =>
+      console.log('[marquee] animation started — moving left to right')
+    const logWrap = () =>
+      console.log('[marquee] reached right edge — wrapping back to the left')
+    el.addEventListener('animationstart', logStart)
+    el.addEventListener('animationiteration', logWrap)
+    const interval = window.setInterval(() => {
+      const { left } = el.getBoundingClientRect()
+      console.log(
+        `[marquee] x=${Math.round(left)}px (viewport ${window.innerWidth}px)`
+      )
+    }, 2000)
+    return () => {
+      el.removeEventListener('animationstart', logStart)
+      el.removeEventListener('animationiteration', logWrap)
+      window.clearInterval(interval)
+    }
+  }, [])
 
   return (
     <div className="page">
@@ -468,7 +495,7 @@ export default function Main() {
       </div>
 
       <div className="marquee-container">
-        <div className="marquee">
+        <div className="marquee" ref={marqueeRef}>
           <span>welcome to my site</span>
         </div>
       </div>

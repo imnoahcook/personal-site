@@ -77,7 +77,7 @@
 .marquee {
   display: inline-block;
   white-space: nowrap;
-  animation: marquee-ltr 12s linear infinite;
+  animation: marquee-ltr 48s linear infinite;
   font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
   font-size: 14px;
   color: #ffff00;
@@ -760,10 +760,6 @@
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .marquee {
-    animation: none;
-  }
-
   .blink {
     animation: none;
   }

@@ -1,10 +1,13 @@
+import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import './NonEuclidean.css'
+import type { Collider2D, PortalRuntime } from './nonEuclideanEngine'
 import {
+  buildWorldColliders,
   carvePortalColliderOpening,
+  collides,
   createAtlasTextureMaterial,
   createPortalMaterial,
   ENGINE_FOV,
@@ -15,8 +18,6 @@ import {
   PLAYER_RADIUS,
   PORTAL_LAYER,
   PORTAL_PUSH,
-  buildWorldColliders,
-  collides,
   parseEngineMesh,
   renderRecursivePortals,
   setRendererLocalClipping,
@@ -25,7 +26,6 @@ import {
   tryTraversePortal,
   updateCameraNearFromPortals,
 } from './nonEuclideanEngine'
-import type { Collider2D, PortalRuntime } from './nonEuclideanEngine'
 
 const FIXED_DT = 0.002
 const MAX_STEPS = 30
@@ -118,12 +118,16 @@ interface SceneWorldProps {
 }
 
 function createRenderTargets(size: number, depth: number) {
-  return Array.from({ length: depth }, () => new THREE.WebGLRenderTarget(size, size, {
-    depthBuffer: true,
-    stencilBuffer: false,
-    magFilter: THREE.NearestFilter,
-    minFilter: THREE.NearestFilter,
-  }))
+  return Array.from(
+    { length: depth },
+    () =>
+      new THREE.WebGLRenderTarget(size, size, {
+        depthBuffer: true,
+        stencilBuffer: false,
+        magFilter: THREE.NearestFilter,
+        minFilter: THREE.NearestFilter,
+      }),
+  )
 }
 
 function wrapAngle(angle: number) {
@@ -168,7 +172,9 @@ function moveBody(
     velocity.z = 0
   }
 
-  position.y = sampleCameraHeight ? sampleCameraHeight(position.x, position.z) : bodyHeight
+  position.y = sampleCameraHeight
+    ? sampleCameraHeight(position.x, position.z)
+    : bodyHeight
 }
 
 function readCameraNumber(value: string | undefined, fallback: number) {
@@ -206,40 +212,75 @@ function SpaceSky({ texture }: { texture: THREE.Texture }) {
   return (
     <mesh ref={skyRef}>
       <sphereGeometry args={[120, 24, 24]} />
-      <meshBasicMaterial map={texture} side={THREE.BackSide} toneMapped={false} />
+      <meshBasicMaterial
+        map={texture}
+        side={THREE.BackSide}
+        toneMapped={false}
+      />
     </mesh>
   )
 }
 
-function MeshTextureMaterial({ atlas, texture }: { atlas?: TextureAtlasConfig; texture?: THREE.Texture }) {
+function MeshTextureMaterial({
+  atlas,
+  texture,
+}: {
+  atlas?: TextureAtlasConfig
+  texture?: THREE.Texture
+}) {
   const atlasColumns = atlas?.columns ?? 1
   const atlasRows = atlas?.rows ?? 1
-  const atlasMaterial = useMemo(() => (
-    texture && atlas
-      ? createAtlasTextureMaterial(texture, atlasColumns, atlasRows)
-      : null
-  ), [atlas, atlasColumns, atlasRows, texture])
+  const atlasMaterial = useMemo(
+    () =>
+      texture && atlas
+        ? createAtlasTextureMaterial(texture, atlasColumns, atlasRows)
+        : null,
+    [atlas, atlasColumns, atlasRows, texture],
+  )
 
-  useEffect(() => () => {
-    atlasMaterial?.dispose()
-  }, [atlasMaterial])
+  useEffect(
+    () => () => {
+      atlasMaterial?.dispose()
+    },
+    [atlasMaterial],
+  )
 
   if (atlasMaterial) {
     return <primitive object={atlasMaterial} attach="material" />
   }
 
-  return <meshBasicMaterial map={texture} toneMapped={false} side={THREE.DoubleSide} />
+  return (
+    <meshBasicMaterial
+      map={texture}
+      toneMapped={false}
+      side={THREE.DoubleSide}
+    />
+  )
 }
 
-function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPortals, spawnOverride }: SceneWorldProps) {
+function SceneWorld({
+  config,
+  onCameraChange,
+  onLockChange,
+  onReady,
+  renderPortals,
+  spawnOverride,
+}: SceneWorldProps) {
   const { camera, gl, scene } = useThree()
   const recursionDepth = config.recursionDepth ?? 4
   const portalRenderSize = config.portalRenderSize ?? 1024
   const bodyHeight = config.playerHeight ?? PLAYER_HEIGHT
   const scaleTransitionDuration = config.scaleTransitionDuration ?? 0
-  const uniqueMeshSources = useMemo(() => (
-    Array.from(new Set([...config.meshes.map((mesh) => mesh.source), PORTAL_GEOMETRY_SOURCE]))
-  ), [config.meshes])
+  const uniqueMeshSources = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...config.meshes.map((mesh) => mesh.source),
+          PORTAL_GEOMETRY_SOURCE,
+        ]),
+      ),
+    [config.meshes],
+  )
   const uniqueTextureSources = useMemo(() => {
     const paths = config.meshes
       .map((mesh) => mesh.texture)
@@ -251,16 +292,26 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
 
     return Array.from(new Set(paths))
   }, [config.meshes, config.skyTexture])
-  const rawMeshSources = useLoader(THREE.FileLoader, uniqueMeshSources) as string[]
-  const loadedTextures = useLoader(THREE.TextureLoader, uniqueTextureSources) as THREE.Texture[]
+  const rawMeshSources = useLoader(
+    THREE.FileLoader,
+    uniqueMeshSources,
+  ) as string[]
+  const loadedTextures = useLoader(
+    THREE.TextureLoader,
+    uniqueTextureSources,
+  ) as THREE.Texture[]
   const parsedMeshes = useMemo(() => {
-    const entries: Array<[string, ReturnType<typeof parseEngineMesh>]> = uniqueMeshSources.map((path, index) => (
-      [path, parseEngineMesh(rawMeshSources[index])]
-    ))
+    const entries: Array<[string, ReturnType<typeof parseEngineMesh>]> =
+      uniqueMeshSources.map((path, index) => [
+        path,
+        parseEngineMesh(rawMeshSources[index]),
+      ])
     return new Map<string, ReturnType<typeof parseEngineMesh>>(entries)
   }, [rawMeshSources, uniqueMeshSources])
   const textures = useMemo(() => {
-    const entries: Array<[string, THREE.Texture]> = uniqueTextureSources.map((path, index) => [path, loadedTextures[index]])
+    const entries: Array<[string, THREE.Texture]> = uniqueTextureSources.map(
+      (path, index) => [path, loadedTextures[index]],
+    )
     return new Map<string, THREE.Texture>(entries)
   }, [loadedTextures, uniqueTextureSources])
   const portalGeometry = parsedMeshes.get(PORTAL_GEOMETRY_SOURCE)?.geometry
@@ -294,14 +345,24 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
   }, [config.meshes, config.portals, parsedMeshes])
   const portalMeshes = useRef<Array<THREE.Mesh | null>>([])
   const portalTargets = useMemo(
-    () => config.portals.map(() => createRenderTargets(portalRenderSize, recursionDepth)),
+    () =>
+      config.portals.map(() =>
+        createRenderTargets(portalRenderSize, recursionDepth),
+      ),
     [config.portals, portalRenderSize, recursionDepth],
   )
   const portalCameras = useMemo(
-    () => config.portals.map(() => new THREE.PerspectiveCamera(ENGINE_FOV, 1, 0.05, config.cameraFar)),
+    () =>
+      config.portals.map(
+        () =>
+          new THREE.PerspectiveCamera(ENGINE_FOV, 1, 0.05, config.cameraFar),
+      ),
     [config.cameraFar, config.portals],
   )
-  const portalMaterials = useMemo(() => config.portals.map(() => createPortalMaterial()), [config.portals])
+  const portalMaterials = useMemo(
+    () => config.portals.map(() => createPortalMaterial()),
+    [config.portals],
+  )
   const playerCubeRef = useRef<THREE.Mesh>(null)
   const bodyPosition = useRef(spawnOverride.position.clone())
   const previousBodyPosition = useRef(spawnOverride.position.clone())
@@ -393,7 +454,17 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
         material.dispose()
       }
     }
-  }, [config.meshes, config.skyTexture, gl, onCameraChange, onReady, portalMaterials, portalTargets, spawnOverride, textures])
+  }, [
+    config.meshes,
+    config.skyTexture,
+    gl,
+    onCameraChange,
+    onReady,
+    portalMaterials,
+    portalTargets,
+    spawnOverride,
+    textures,
+  ])
 
   useEffect(() => {
     const target = domElementRef.current
@@ -482,26 +553,43 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
       return
     }
 
-    yaw.current = wrapAngle(yaw.current - mouseDelta.current.x * MOUSE_SENSITIVITY)
-    pitch.current = clampPitch(pitch.current - mouseDelta.current.y * MOUSE_SENSITIVITY)
+    yaw.current = wrapAngle(
+      yaw.current - mouseDelta.current.x * MOUSE_SENSITIVITY,
+    )
+    pitch.current = clampPitch(
+      pitch.current - mouseDelta.current.y * MOUSE_SENSITIVITY,
+    )
     mouseDelta.current.x = 0
     mouseDelta.current.y = 0
 
     fixedStepRemainder.current += Math.min(delta, FIXED_DT * MAX_STEPS)
 
-    for (let step = 0; fixedStepRemainder.current >= FIXED_DT && step < MAX_STEPS; step += 1) {
+    for (
+      let step = 0;
+      fixedStepRemainder.current >= FIXED_DT && step < MAX_STEPS;
+      step += 1
+    ) {
       fixedStepRemainder.current -= FIXED_DT
       previousBodyPosition.current.copy(bodyPosition.current)
 
       velocity.current.multiplyScalar(1 - PLAYER_DRAG)
-      moveBody(bodyPosition.current, velocity.current, FIXED_DT, colliders, bodyHeight, config.sampleCameraHeight)
+      moveBody(
+        bodyPosition.current,
+        velocity.current,
+        FIXED_DT,
+        colliders,
+        bodyHeight,
+        config.sampleCameraHeight,
+      )
 
       velocity.current.x *= 1 - GROUND_FRICTION
       velocity.current.z *= 1 - GROUND_FRICTION
 
       let moveForward = 0
       let moveLeft = 0
-      const sprinting = Boolean(pressedKeys.current.ShiftLeft || pressedKeys.current.ShiftRight)
+      const sprinting = Boolean(
+        pressedKeys.current.ShiftLeft || pressedKeys.current.ShiftRight,
+      )
       const targetSpeed = WALK_SPEED * (sprinting ? SPRINT_MULTIPLIER : 1)
       const targetAccel = WALK_ACCEL * (sprinting ? SPRINT_MULTIPLIER : 1)
       if (pressedKeys.current.KeyW) moveForward += 1
@@ -530,9 +618,12 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
         velocity.current.z = tempStep.z
       }
 
-      const stepDistance = bodyPosition.current.distanceTo(previousBodyPosition.current)
+      const stepDistance = bodyPosition.current.distanceTo(
+        previousBodyPosition.current,
+      )
       const targetBobMagnitude = stepDistance / FIXED_DT
-      bobMagnitude.current = bobMagnitude.current * (1 - BOB_DAMP) + targetBobMagnitude * BOB_DAMP
+      bobMagnitude.current =
+        bobMagnitude.current * (1 - BOB_DAMP) + targetBobMagnitude * BOB_DAMP
       if (bobMagnitude.current < BOB_MIN) {
         bobPhase.current = 0
       } else {
@@ -549,14 +640,24 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
 
       if (blockedPortalIndex.current !== null) {
         const blockedPortal = portalMeshes.current[blockedPortalIndex.current]
-        if (blockedPortal && Math.abs(getPortalPlaneDistance(bodyPosition.current, blockedPortal)) > PLAYER_RADIUS + PORTAL_PUSH) {
+        if (
+          blockedPortal &&
+          Math.abs(
+            getPortalPlaneDistance(bodyPosition.current, blockedPortal),
+          ) >
+            PLAYER_RADIUS + PORTAL_PUSH
+        ) {
           blockedPortalIndex.current = null
         }
       }
 
       let traversed = false
 
-      for (let index = 0; index < config.portals.length && !traversed; index += 1) {
+      for (
+        let index = 0;
+        index < config.portals.length && !traversed;
+        index += 1
+      ) {
         if (blockedPortalIndex.current === index) {
           continue
         }
@@ -615,18 +716,31 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
 
       bodyPosition.current.copy(activeCamera.position)
       bodyPosition.current.y = config.sampleCameraHeight
-        ? config.sampleCameraHeight(bodyPosition.current.x, bodyPosition.current.z)
+        ? config.sampleCameraHeight(
+            bodyPosition.current.x,
+            bodyPosition.current.z,
+          )
         : bodyHeight
       cameraEuler.current.setFromQuaternion(activeCamera.quaternion, 'YXZ')
       yaw.current = wrapAngle(cameraEuler.current.y)
       pitch.current = clampPitch(cameraEuler.current.x)
     }
 
-    if (scaleTransitionDuration > 0 && scaleTransitionElapsed.current < scaleTransitionDuration) {
-      scaleTransitionElapsed.current = Math.min(scaleTransitionElapsed.current + delta, scaleTransitionDuration)
+    if (
+      scaleTransitionDuration > 0 &&
+      scaleTransitionElapsed.current < scaleTransitionDuration
+    ) {
+      scaleTransitionElapsed.current = Math.min(
+        scaleTransitionElapsed.current + delta,
+        scaleTransitionDuration,
+      )
       const progress = scaleTransitionElapsed.current / scaleTransitionDuration
       const eased = progress * progress * (3 - 2 * progress)
-      activeCamera.zoom = THREE.MathUtils.lerp(scaleTransitionStartZoom.current, 1, eased)
+      activeCamera.zoom = THREE.MathUtils.lerp(
+        scaleTransitionStartZoom.current,
+        1,
+        eased,
+      )
       activeCamera.updateProjectionMatrix()
     } else if (activeCamera.zoom !== 1) {
       activeCamera.zoom = 1
@@ -635,7 +749,10 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
 
     activeCamera.rotation.order = 'YXZ'
     activeCamera.position.copy(bodyPosition.current)
-    activeCamera.position.y += getBobOffset(bobMagnitude.current, bobPhase.current)
+    activeCamera.position.y += getBobOffset(
+      bobMagnitude.current,
+      bobPhase.current,
+    )
     activeCamera.rotation.set(pitch.current, yaw.current, 0)
     activeCamera.updateMatrixWorld(true)
 
@@ -652,7 +769,11 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
     const xrEnabled = renderer.xr.enabled
     setRendererXrEnabled(renderer, false)
 
-    if (!renderPortals || !portalGeometry || portalMeshes.current.some((mesh) => !mesh)) {
+    if (
+      !renderPortals ||
+      !portalGeometry ||
+      portalMeshes.current.some((mesh) => !mesh)
+    ) {
       renderer.setRenderTarget(null)
       renderer.clear(true, true, true)
       renderer.render(scene, activeCamera)
@@ -668,7 +789,13 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
       renderTargets: portalTargets[index],
     }))
     updateCameraNearFromPortals(activeCamera, portals)
-    renderRecursivePortals(renderer, scene, activeCamera, portals, recursionDepth)
+    renderRecursivePortals(
+      renderer,
+      scene,
+      activeCamera,
+      portals,
+      recursionDepth,
+    )
     setRendererXrEnabled(renderer, xrEnabled)
 
     cameraSampleTimer.current += delta
@@ -692,7 +819,9 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
     <>
       <color attach="background" args={[config.backgroundColor]} />
 
-      {config.skyTexture && textures.get(config.skyTexture) && <SpaceSky texture={textures.get(config.skyTexture)!} />}
+      {config.skyTexture && textures.get(config.skyTexture) && (
+        <SpaceSky texture={textures.get(config.skyTexture)!} />
+      )}
 
       {config.meshes.map((mesh) => {
         const parsedMesh = parsedMeshes.get(mesh.source)
@@ -714,20 +843,21 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
         )
       })}
 
-      {renderPortals && config.portals.map((portal, index) => (
-        <mesh
-          key={index}
-          ref={(mesh) => {
-            portalMeshes.current[index] = mesh
-          }}
-          geometry={portalGeometry}
-          position={portal.position}
-          rotation={portal.rotation}
-          scale={portal.scale}
-        >
-          <primitive object={portalMaterials[index]} attach="material" />
-        </mesh>
-      ))}
+      {renderPortals &&
+        config.portals.map((portal, index) => (
+          <mesh
+            key={index}
+            ref={(mesh) => {
+              portalMeshes.current[index] = mesh
+            }}
+            geometry={portalGeometry}
+            position={portal.position}
+            rotation={portal.rotation}
+            scale={portal.scale}
+          >
+            <primitive object={portalMaterials[index]} attach="material" />
+          </mesh>
+        ))}
 
       {config.showPlayerCube && (
         <mesh ref={playerCubeRef} scale={PLAYER_CUBE_SIZE}>
@@ -739,7 +869,11 @@ function SceneWorld({ config, onCameraChange, onLockChange, onReady, renderPorta
   )
 }
 
-export default function NonEuclideanScenePage({ config }: { config: NonEuclideanSceneConfig }) {
+export default function NonEuclideanScenePage({
+  config,
+}: {
+  config: NonEuclideanSceneConfig
+}) {
   const params = useParams()
   const [searchParams] = useSearchParams()
   const [cameraState, setCameraState] = useState<CameraState>({
@@ -749,12 +883,16 @@ export default function NonEuclideanScenePage({ config }: { config: NonEuclidean
     yaw: config.spawnYaw ?? 0,
     z: config.spawnPosition.z,
   })
-  const spawnOverride = useMemo(() => resolveSceneCameraOverride(
-    config.spawnPosition,
-    config.spawnYaw ?? 0,
-    config.spawnPitch ?? 0,
-    params,
-  ), [config, params])
+  const spawnOverride = useMemo(
+    () =>
+      resolveSceneCameraOverride(
+        config.spawnPosition,
+        config.spawnYaw ?? 0,
+        config.spawnPitch ?? 0,
+        params,
+      ),
+    [config, params],
+  )
   const hideHud = searchParams.get('hud') === '0'
   const renderPortals = searchParams.get('portals') !== '0'
 
@@ -799,16 +937,20 @@ export default function NonEuclideanScenePage({ config }: { config: NonEuclidean
         </Canvas>
       </div>
 
-      {!hideHud && <div className="non-euclidean-ui">
-        <p className="non-euclidean-title">{config.title.toUpperCase()}</p>
-        <p className="non-euclidean-copy">
-          current position: x={cameraState.x.toFixed(3)} y={cameraState.y.toFixed(3)} z={cameraState.z.toFixed(3)} yaw={cameraState.yaw.toFixed(4)} pitch={cameraState.pitch.toFixed(4)}
-        </p>
+      {!hideHud && (
+        <div className="non-euclidean-ui">
+          <p className="non-euclidean-title">{config.title.toUpperCase()}</p>
+          <p className="non-euclidean-copy">
+            current position: x={cameraState.x.toFixed(3)} y=
+            {cameraState.y.toFixed(3)} z={cameraState.z.toFixed(3)} yaw=
+            {cameraState.yaw.toFixed(4)} pitch={cameraState.pitch.toFixed(4)}
+          </p>
 
-        <div className="non-euclidean-links">
-          <Link to="/non-euclidean">all demos</Link>
+          <div className="non-euclidean-links">
+            <Link to="/non-euclidean">all demos</Link>
+          </div>
         </div>
-      </div>}
+      )}
     </div>
   )
 }

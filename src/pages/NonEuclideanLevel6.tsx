@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import NonEuclideanScenePage from './NonEuclideanScenePage'
 import type { NonEuclideanSceneConfig } from './NonEuclideanScenePage'
+import NonEuclideanScenePage from './NonEuclideanScenePage'
 
 const FLOORPLAN_SCALE = 0.1524
 
@@ -15,7 +15,11 @@ function floorplanPortal(
   return {
     backTargetIndex,
     frontTargetIndex,
-    position: new THREE.Vector3(x * FLOORPLAN_SCALE, y * FLOORPLAN_SCALE, z * FLOORPLAN_SCALE),
+    position: new THREE.Vector3(
+      x * FLOORPLAN_SCALE,
+      y * FLOORPLAN_SCALE,
+      z * FLOORPLAN_SCALE,
+    ),
     rotation: new THREE.Euler(0, rotationY, 0),
     scale: new THREE.Vector3(4 * FLOORPLAN_SCALE, 10 * FLOORPLAN_SCALE, 1),
   }
@@ -35,7 +39,11 @@ const config: NonEuclideanSceneConfig = {
       texture: '/non-euclidean/engine/floorplan_textures.bmp',
       textureAtlas: { columns: 4, rows: 4 },
       position: new THREE.Vector3(0, 0, 0),
-      scale: new THREE.Vector3(FLOORPLAN_SCALE, FLOORPLAN_SCALE, FLOORPLAN_SCALE),
+      scale: new THREE.Vector3(
+        FLOORPLAN_SCALE,
+        FLOORPLAN_SCALE,
+        FLOORPLAN_SCALE,
+      ),
       includeColliders: true,
     },
   ],

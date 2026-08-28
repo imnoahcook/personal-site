@@ -1,6 +1,6 @@
-import { useRef, useEffect, useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
 import anime from 'animejs'
+import { useEffect, useRef, useState } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 
 export default function Layout() {
   const location = useLocation()

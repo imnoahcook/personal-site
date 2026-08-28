@@ -1,30 +1,30 @@
+import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import './NonEuclidean.css'
+import type { Collider2D, PortalRuntime } from './nonEuclideanEngine'
 import {
+  buildWorldColliders,
   carvePortalColliderOpening,
+  collides,
   createPortalMaterial,
   ENGINE_FOV,
   getPortalPlaneDistance,
   getPortalTargetIndex,
   PLAYER_HEIGHT,
   PLAYER_RADIUS,
-  PORTAL_PUSH,
   PORTAL_LAYER,
-  buildWorldColliders,
-  collides,
+  PORTAL_PUSH,
   parseEngineMesh,
-  resolveCameraOverride,
   renderRecursivePortals,
+  resolveCameraOverride,
   setRendererLocalClipping,
   setRendererXrEnabled,
   setupTexture,
   tryTraversePortal,
   updateCameraNearFromPortals,
 } from './nonEuclideanEngine'
-import type { Collider2D, PortalRuntime } from './nonEuclideanEngine'
 
 const HOUSE_1_POSITION = new THREE.Vector3(0, 0, -20)
 const HOUSE_2_POSITION = new THREE.Vector3(200, 0, -20)
@@ -100,12 +100,16 @@ void main() {
 `
 
 function createRenderTargets() {
-  return Array.from({ length: RECURSION_DEPTH }, () => new THREE.WebGLRenderTarget(PORTAL_RENDER_SIZE, PORTAL_RENDER_SIZE, {
-    depthBuffer: true,
-    stencilBuffer: false,
-    magFilter: THREE.NearestFilter,
-    minFilter: THREE.NearestFilter,
-  }))
+  return Array.from(
+    { length: RECURSION_DEPTH },
+    () =>
+      new THREE.WebGLRenderTarget(PORTAL_RENDER_SIZE, PORTAL_RENDER_SIZE, {
+        depthBuffer: true,
+        stencilBuffer: false,
+        magFilter: THREE.NearestFilter,
+        minFilter: THREE.NearestFilter,
+      }),
+  )
 }
 
 function wrapAngle(angle: number) {
@@ -154,13 +158,17 @@ function moveBody(
 function EngineSky() {
   const { camera } = useThree()
   const skyRef = useRef<THREE.Mesh>(null)
-  const material = useMemo(() => new THREE.ShaderMaterial({
-    depthWrite: false,
-    fragmentShader: skyFragmentShader,
-    side: THREE.BackSide,
-    toneMapped: false,
-    vertexShader: skyVertexShader,
-  }), [])
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        depthWrite: false,
+        fragmentShader: skyFragmentShader,
+        side: THREE.BackSide,
+        toneMapped: false,
+        vertexShader: skyVertexShader,
+      }),
+    [],
+  )
 
   useEffect(() => () => material.dispose(), [material])
 
@@ -194,30 +202,74 @@ interface CameraState {
   z: number
 }
 
-function Level26World({ onCameraChange, onLockChange, onReady, renderPortals, spawnOverride }: Level26WorldProps) {
+function Level26World({
+  onCameraChange,
+  onLockChange,
+  onReady,
+  renderPortals,
+  spawnOverride,
+}: Level26WorldProps) {
   const { camera, gl, scene } = useThree()
-  const houseSource = useLoader(THREE.FileLoader, '/non-euclidean/engine/square_rooms.obj') as string
-  const portalSource = useLoader(THREE.FileLoader, '/non-euclidean/engine/double_quad.obj') as string
-  const houseTextureA = useLoader(THREE.TextureLoader, '/non-euclidean/engine/three_room.bmp')
-  const houseTextureB = useLoader(THREE.TextureLoader, '/non-euclidean/engine/three_room2.bmp')
+  const houseSource = useLoader(
+    THREE.FileLoader,
+    '/non-euclidean/engine/square_rooms.obj',
+  ) as string
+  const portalSource = useLoader(
+    THREE.FileLoader,
+    '/non-euclidean/engine/double_quad.obj',
+  ) as string
+  const houseTextureA = useLoader(
+    THREE.TextureLoader,
+    '/non-euclidean/engine/three_room.bmp',
+  )
+  const houseTextureB = useLoader(
+    THREE.TextureLoader,
+    '/non-euclidean/engine/three_room2.bmp',
+  )
   const parsedMesh = useMemo(() => parseEngineMesh(houseSource), [houseSource])
-  const portalGeometry = useMemo(() => parseEngineMesh(portalSource).geometry, [portalSource])
+  const portalGeometry = useMemo(
+    () => parseEngineMesh(portalSource).geometry,
+    [portalSource],
+  )
   const colliders = useMemo(() => {
     let result = [
-      ...buildWorldColliders(parsedMesh.colliders, { position: HOUSE_1_POSITION, scale: HOUSE_SCALE }),
-      ...buildWorldColliders(parsedMesh.colliders, { position: HOUSE_2_POSITION, scale: HOUSE_SCALE }),
+      ...buildWorldColliders(parsedMesh.colliders, {
+        position: HOUSE_1_POSITION,
+        scale: HOUSE_SCALE,
+      }),
+      ...buildWorldColliders(parsedMesh.colliders, {
+        position: HOUSE_2_POSITION,
+        scale: HOUSE_SCALE,
+      }),
     ]
 
     for (const portal of PORTAL_CONFIGS) {
-      result = carvePortalColliderOpening(result, portal.position, portal.rotation.y, 2)
+      result = carvePortalColliderOpening(
+        result,
+        portal.position,
+        portal.rotation.y,
+        2,
+      )
     }
 
     return result
   }, [parsedMesh.colliders])
   const portalMeshes = useRef<Array<THREE.Mesh | null>>([null, null, null])
-  const portalTargets = useMemo(() => PORTAL_CONFIGS.map(() => createRenderTargets()), [])
-  const portalCameras = useMemo(() => PORTAL_CONFIGS.map(() => new THREE.PerspectiveCamera(ENGINE_FOV, 1, 0.05, CAMERA_FAR)), [])
-  const portalMaterials = useMemo(() => PORTAL_CONFIGS.map(() => createPortalMaterial()), [])
+  const portalTargets = useMemo(
+    () => PORTAL_CONFIGS.map(() => createRenderTargets()),
+    [],
+  )
+  const portalCameras = useMemo(
+    () =>
+      PORTAL_CONFIGS.map(
+        () => new THREE.PerspectiveCamera(ENGINE_FOV, 1, 0.05, CAMERA_FAR),
+      ),
+    [],
+  )
+  const portalMaterials = useMemo(
+    () => PORTAL_CONFIGS.map(() => createPortalMaterial()),
+    [],
+  )
   const bodyPosition = useRef(new THREE.Vector3(3, PLAYER_HEIGHT, 3))
   const previousBodyPosition = useRef(new THREE.Vector3(3, PLAYER_HEIGHT, 3))
   const velocity = useRef(new THREE.Vector3())
@@ -279,7 +331,17 @@ function Level26World({ onCameraChange, onLockChange, onReady, renderPortals, sp
         material.dispose()
       }
     }
-  }, [camera, gl, houseTextureA, houseTextureB, onCameraChange, onReady, portalMaterials, portalTargets, spawnOverride])
+  }, [
+    camera,
+    gl,
+    houseTextureA,
+    houseTextureB,
+    onCameraChange,
+    onReady,
+    portalMaterials,
+    portalTargets,
+    spawnOverride,
+  ])
 
   useEffect(() => {
     const target = gl.domElement
@@ -361,14 +423,22 @@ function Level26World({ onCameraChange, onLockChange, onReady, renderPortals, sp
   useFrame((_, delta) => {
     const activeCamera = camera as THREE.PerspectiveCamera
 
-    yaw.current = wrapAngle(yaw.current - mouseDelta.current.x * MOUSE_SENSITIVITY)
-    pitch.current = clampPitch(pitch.current - mouseDelta.current.y * MOUSE_SENSITIVITY)
+    yaw.current = wrapAngle(
+      yaw.current - mouseDelta.current.x * MOUSE_SENSITIVITY,
+    )
+    pitch.current = clampPitch(
+      pitch.current - mouseDelta.current.y * MOUSE_SENSITIVITY,
+    )
     mouseDelta.current.x = 0
     mouseDelta.current.y = 0
 
     fixedStepRemainder.current += Math.min(delta, FIXED_DT * MAX_STEPS)
 
-    for (let step = 0; fixedStepRemainder.current >= FIXED_DT && step < MAX_STEPS; step += 1) {
+    for (
+      let step = 0;
+      fixedStepRemainder.current >= FIXED_DT && step < MAX_STEPS;
+      step += 1
+    ) {
       fixedStepRemainder.current -= FIXED_DT
       previousBodyPosition.current.copy(bodyPosition.current)
 
@@ -380,7 +450,9 @@ function Level26World({ onCameraChange, onLockChange, onReady, renderPortals, sp
 
       let moveForward = 0
       let moveLeft = 0
-      const sprinting = Boolean(pressedKeys.current.ShiftLeft || pressedKeys.current.ShiftRight)
+      const sprinting = Boolean(
+        pressedKeys.current.ShiftLeft || pressedKeys.current.ShiftRight,
+      )
       const targetSpeed = WALK_SPEED * (sprinting ? SPRINT_MULTIPLIER : 1)
       const targetAccel = WALK_ACCEL * (sprinting ? SPRINT_MULTIPLIER : 1)
       if (pressedKeys.current.KeyW) moveForward += 1
@@ -409,9 +481,12 @@ function Level26World({ onCameraChange, onLockChange, onReady, renderPortals, sp
         velocity.current.z = tempStep.z
       }
 
-      const stepDistance = bodyPosition.current.distanceTo(previousBodyPosition.current)
+      const stepDistance = bodyPosition.current.distanceTo(
+        previousBodyPosition.current,
+      )
       const targetBobMagnitude = stepDistance / FIXED_DT
-      bobMagnitude.current = bobMagnitude.current * (1 - BOB_DAMP) + targetBobMagnitude * BOB_DAMP
+      bobMagnitude.current =
+        bobMagnitude.current * (1 - BOB_DAMP) + targetBobMagnitude * BOB_DAMP
       if (bobMagnitude.current < BOB_MIN) {
         bobPhase.current = 0
       } else {
@@ -429,14 +504,24 @@ function Level26World({ onCameraChange, onLockChange, onReady, renderPortals, sp
 
       if (blockedPortalIndex.current !== null) {
         const blockedPortal = portalMeshes.current[blockedPortalIndex.current]
-        if (blockedPortal && Math.abs(getPortalPlaneDistance(bodyPosition.current, blockedPortal)) > PLAYER_RADIUS + PORTAL_PUSH) {
+        if (
+          blockedPortal &&
+          Math.abs(
+            getPortalPlaneDistance(bodyPosition.current, blockedPortal),
+          ) >
+            PLAYER_RADIUS + PORTAL_PUSH
+        ) {
           blockedPortalIndex.current = null
         }
       }
 
       let traversed = false
 
-      for (let index = 0; index < PORTAL_CONFIGS.length && !traversed; index += 1) {
+      for (
+        let index = 0;
+        index < PORTAL_CONFIGS.length && !traversed;
+        index += 1
+      ) {
         if (blockedPortalIndex.current === index) {
           continue
         }
@@ -485,7 +570,10 @@ function Level26World({ onCameraChange, onLockChange, onReady, renderPortals, sp
 
     activeCamera.rotation.order = 'YXZ'
     activeCamera.position.copy(bodyPosition.current)
-    activeCamera.position.y += getBobOffset(bobMagnitude.current, bobPhase.current)
+    activeCamera.position.y += getBobOffset(
+      bobMagnitude.current,
+      bobPhase.current,
+    )
     activeCamera.rotation.set(pitch.current, yaw.current, 0)
     activeCamera.updateMatrixWorld(true)
 
@@ -509,7 +597,13 @@ function Level26World({ onCameraChange, onLockChange, onReady, renderPortals, sp
       renderTargets: portalTargets[index],
     }))
     updateCameraNearFromPortals(activeCamera, portals)
-    renderRecursivePortals(renderer, scene, activeCamera, portals, RECURSION_DEPTH)
+    renderRecursivePortals(
+      renderer,
+      scene,
+      activeCamera,
+      portals,
+      RECURSION_DEPTH,
+    )
     setRendererXrEnabled(renderer, xrEnabled)
 
     cameraSampleTimer.current += delta
@@ -531,28 +625,45 @@ function Level26World({ onCameraChange, onLockChange, onReady, renderPortals, sp
 
       <EngineSky />
 
-      <mesh geometry={parsedMesh.geometry} position={HOUSE_1_POSITION} scale={HOUSE_SCALE}>
-        <meshBasicMaterial map={houseTextureA} toneMapped={false} side={THREE.DoubleSide} />
+      <mesh
+        geometry={parsedMesh.geometry}
+        position={HOUSE_1_POSITION}
+        scale={HOUSE_SCALE}
+      >
+        <meshBasicMaterial
+          map={houseTextureA}
+          toneMapped={false}
+          side={THREE.DoubleSide}
+        />
       </mesh>
 
-      <mesh geometry={parsedMesh.geometry} position={HOUSE_2_POSITION} scale={HOUSE_SCALE}>
-        <meshBasicMaterial map={houseTextureB} toneMapped={false} side={THREE.DoubleSide} />
+      <mesh
+        geometry={parsedMesh.geometry}
+        position={HOUSE_2_POSITION}
+        scale={HOUSE_SCALE}
+      >
+        <meshBasicMaterial
+          map={houseTextureB}
+          toneMapped={false}
+          side={THREE.DoubleSide}
+        />
       </mesh>
 
-      {renderPortals && PORTAL_CONFIGS.map((portal, index) => (
-        <mesh
-          key={index}
-          ref={(mesh) => {
-            portalMeshes.current[index] = mesh
-          }}
-          geometry={portalGeometry}
-          position={portal.position}
-          rotation={portal.rotation}
-          scale={[2, 1.5, 1]}
-        >
-          <primitive object={portalMaterials[index]} attach="material" />
-        </mesh>
-      ))}
+      {renderPortals &&
+        PORTAL_CONFIGS.map((portal, index) => (
+          <mesh
+            key={index}
+            ref={(mesh) => {
+              portalMeshes.current[index] = mesh
+            }}
+            geometry={portalGeometry}
+            position={portal.position}
+            rotation={portal.rotation}
+            scale={[2, 1.5, 1]}
+          >
+            <primitive object={portalMaterials[index]} attach="material" />
+          </mesh>
+        ))}
     </>
   )
 }
@@ -569,7 +680,14 @@ export default function NonEuclideanLevel26() {
     z: 3,
   })
   const spawnOverride = useMemo(
-    () => resolveCameraOverride(new THREE.Vector3(3, PLAYER_HEIGHT, 3), 0, 0, { x, y, z, yaw, pitch }),
+    () =>
+      resolveCameraOverride(new THREE.Vector3(3, PLAYER_HEIGHT, 3), 0, 0, {
+        x,
+        y,
+        z,
+        yaw,
+        pitch,
+      }),
     [pitch, x, y, yaw, z],
   )
   const hideHud = searchParams.get('hud') === '0'
@@ -592,7 +710,12 @@ export default function NonEuclideanLevel26() {
     <div className="non-euclidean-page">
       <div className="non-euclidean-viewport">
         <Canvas
-          camera={{ fov: ENGINE_FOV, near: 0.05, far: CAMERA_FAR, position: [3, PLAYER_HEIGHT, 3] }}
+          camera={{
+            fov: ENGINE_FOV,
+            near: 0.05,
+            far: CAMERA_FAR,
+            position: [3, PLAYER_HEIGHT, 3],
+          }}
           frameloop="always"
           gl={{ antialias: false }}
         >
@@ -606,16 +729,20 @@ export default function NonEuclideanLevel26() {
         </Canvas>
       </div>
 
-      {!hideHud && <div className="non-euclidean-ui">
-        <p className="non-euclidean-title">LEVEL2(6)</p>
-        <p className="non-euclidean-copy">
-          current position: x={cameraState.x.toFixed(3)} y={cameraState.y.toFixed(3)} z={cameraState.z.toFixed(3)} yaw={cameraState.yaw.toFixed(4)} pitch={cameraState.pitch.toFixed(4)}
-        </p>
+      {!hideHud && (
+        <div className="non-euclidean-ui">
+          <p className="non-euclidean-title">LEVEL2(6)</p>
+          <p className="non-euclidean-copy">
+            current position: x={cameraState.x.toFixed(3)} y=
+            {cameraState.y.toFixed(3)} z={cameraState.z.toFixed(3)} yaw=
+            {cameraState.yaw.toFixed(4)} pitch={cameraState.pitch.toFixed(4)}
+          </p>
 
-        <div className="non-euclidean-links">
-          <Link to="/non-euclidean">all demos</Link>
+          <div className="non-euclidean-links">
+            <Link to="/non-euclidean">all demos</Link>
+          </div>
         </div>
-      </div>}
+      )}
     </div>
   )
 }

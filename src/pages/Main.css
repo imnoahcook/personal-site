@@ -5,7 +5,7 @@
   min-height: 100vh;
   background: #0a0a1a;
   overflow-x: hidden;
-  font-family: 'Times New Roman', 'Georgia', serif;
+  font-family: "Times New Roman", "Georgia", serif;
   color: #e0e0e0;
   padding-top: 60px; /* space for site nav */
 }
@@ -24,7 +24,7 @@
   height: 100%;
   z-index: 0;
   pointer-events: none;
-  background: url('/fp-img/spacewithstars.gif') repeat;
+  background: url("/fp-img/spacewithstars.gif") repeat;
   background-size: auto;
 }
 
@@ -37,7 +37,7 @@
 }
 
 .wordart {
-  font-family: 'Impact', 'Arial Black', sans-serif;
+  font-family: "Impact", "Arial Black", sans-serif;
   font-size: clamp(48px, 8vw, 80px);
   font-weight: 900;
   letter-spacing: 4px;
@@ -78,7 +78,7 @@
   display: inline-block;
   white-space: nowrap;
   animation: marquee-ltr 48s linear infinite;
-  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-family: "Comic Sans MS", "Chalkboard SE", cursive;
   font-size: 14px;
   color: #ffff00;
 }
@@ -88,8 +88,12 @@
 }
 
 @keyframes marquee-ltr {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100vw); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100vw);
+  }
 }
 
 /* Main layout */
@@ -126,10 +130,10 @@
   gap: 4px;
   padding: 10px 8px;
   border: 2px ridge #10ad98;
-  background: url('/icons/rainwindow.gif') center/cover;
+  background: url("/icons/rainwindow.gif") center / cover;
   color: #ffffff;
   text-decoration: none;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   font-size: 14px;
   font-weight: bold;
   text-align: center;
@@ -177,7 +181,7 @@
 }
 
 .art-label {
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 11px;
   color: #aaa;
 }
@@ -249,7 +253,7 @@
   font-size: 16px;
   font-weight: bold;
   text-decoration: underline;
-  font-family: 'Times New Roman', serif;
+  font-family: "Times New Roman", serif;
 }
 
 .link-list a:hover {
@@ -279,7 +283,7 @@
 .gb-name {
   color: #00ff99;
   font-weight: bold;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 13px;
 }
 
@@ -287,7 +291,7 @@
   color: #666;
   font-size: 12px;
   margin-left: 12px;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 .gb-header {
@@ -300,7 +304,7 @@
   background: none;
   border: 1px solid #444;
   color: #888;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 13px;
   cursor: pointer;
   padding: 2px 8px;
@@ -338,7 +342,7 @@
   background: rgba(0, 0, 0, 0.6);
   border: 1px solid #444;
   color: #ccc;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 13px;
   outline: none;
   box-sizing: border-box;
@@ -358,7 +362,7 @@
   background: none;
   border: 2px ridge #10ad98;
   color: #91ebff;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 13px;
   font-weight: bold;
   padding: 8px 16px;
@@ -394,7 +398,7 @@
 }
 
 .portal-text {
-  font-family: 'Times New Roman', serif;
+  font-family: "Times New Roman", serif;
   font-size: 18px;
   color: #e0e0e0;
   margin-bottom: 16px;
@@ -426,7 +430,7 @@
   background: none;
   border: 2px ridge #10ad98;
   color: #91ebff;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 16px;
   font-weight: bold;
   padding: 12px 24px;
@@ -442,7 +446,7 @@
 
 .blink {
   display: block;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 20px;
   font-weight: bold;
   color: #ffff00;
@@ -451,8 +455,13 @@
 }
 
 @keyframes blink-anim {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 .construction p {
@@ -508,7 +517,7 @@
   background: none;
   border: 2px ridge #ff0000;
   color: #ff0000;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 13px;
   padding: 8px 20px;
   cursor: pointer;
@@ -522,11 +531,22 @@
 }
 
 @keyframes ban-shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-10px); }
-  40% { transform: translateX(10px); }
-  60% { transform: translateX(-6px); }
-  80% { transform: translateX(6px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-10px);
+  }
+  40% {
+    transform: translateX(10px);
+  }
+  60% {
+    transform: translateX(-6px);
+  }
+  80% {
+    transform: translateX(6px);
+  }
 }
 
 /* Visitor counter */
@@ -557,11 +577,10 @@
   background: #111;
   border: 1px solid #333;
   color: #00ff00;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 16px;
   font-weight: bold;
 }
-
 
 /* Retro Piano */
 .piano-wrapper {
@@ -569,7 +588,7 @@
 }
 
 .piano-label {
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 12px;
   color: #888;
   margin-bottom: 12px;
@@ -593,7 +612,7 @@
   justify-content: center;
   padding-bottom: 8px;
   transition: none;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-weight: bold;
 }
 
@@ -609,7 +628,9 @@
   color: #444;
   font-size: 11px;
   z-index: 1;
-  box-shadow: 1px 1px 0 #666, 2px 2px 0 #444;
+  box-shadow:
+    1px 1px 0 #666,
+    2px 2px 0 #444;
 }
 
 .piano-white:active,
@@ -627,7 +648,9 @@
   margin-left: -14px;
   margin-right: -14px;
   z-index: 2;
-  box-shadow: 1px 1px 0 #000, 2px 2px 0 #000;
+  box-shadow:
+    1px 1px 0 #000,
+    2px 2px 0 #000;
 }
 
 .piano-black:active,
@@ -663,7 +686,7 @@
   background: rgba(0, 0, 0, 0.9);
   border: 2px ridge #10ad98;
   color: #91ebff;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 12px;
   padding: 6px 10px;
   margin-bottom: -10px;
@@ -673,7 +696,7 @@
 }
 
 .rabbit-bubble::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -8px;
   left: 50%;
@@ -726,7 +749,6 @@
   .title {
     font-size: 24px;
   }
-
 
   .rabbit-container {
     bottom: 10px;

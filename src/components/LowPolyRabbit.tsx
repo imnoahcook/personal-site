@@ -1,8 +1,12 @@
-import { useRef, useEffect, useCallback, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import * as THREE from 'three'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type * as THREE from 'three'
 
-function Rabbit({ containerRef }: { containerRef: React.RefObject<HTMLDivElement | null> }) {
+function Rabbit({
+  containerRef,
+}: {
+  containerRef: React.RefObject<HTMLDivElement | null>
+}) {
   const groupRef = useRef<THREE.Group>(null)
   const mouse = useRef({ x: 0, y: 0 })
 
@@ -153,7 +157,10 @@ export default function LowPolyRabbit() {
       el.style.left = '0px'
       el.style.top = '0px'
     }
-    offset.current = { x: e.clientX - pos.current.x, y: e.clientY - pos.current.y }
+    offset.current = {
+      x: e.clientX - pos.current.x,
+      y: e.clientY - pos.current.y,
+    }
     el.setPointerCapture(e.pointerId)
   }, [])
 
@@ -164,7 +171,10 @@ export default function LowPolyRabbit() {
     const onPointerMove = (e: PointerEvent) => {
       if (!dragging.current) return
       didDrag.current = true
-      pos.current = { x: e.clientX - offset.current.x, y: e.clientY - offset.current.y }
+      pos.current = {
+        x: e.clientX - offset.current.x,
+        y: e.clientY - offset.current.y,
+      }
       el.style.transform = `translate(${pos.current.x}px, ${pos.current.y}px)`
     }
     const onPointerUp = () => {
@@ -199,15 +209,17 @@ export default function LowPolyRabbit() {
       onPointerDown={onPointerDown}
     >
       <div className="rabbit-bubble">{bubble}</div>
-      <div
-        ref={containerRef}
-        className="rabbit"
-      >
+      <div ref={containerRef} className="rabbit">
         <Canvas
           camera={{ position: [0, 0, 4], fov: 40 }}
           style={{ background: 'transparent', pointerEvents: 'none' }}
           gl={{ alpha: true }}
-          events={() => ({ enabled: false, priority: 0, compute: () => {}, connected: undefined })}
+          events={() => ({
+            enabled: false,
+            priority: 0,
+            compute: () => {},
+            connected: undefined,
+          })}
         >
           <ambientLight intensity={0.6} />
           <directionalLight position={[3, 3, 5]} intensity={1} />

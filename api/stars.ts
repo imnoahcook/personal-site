@@ -1,18 +1,32 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { and, eq, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import { pgTable, text, integer, timestamp, serial, primaryKey } from 'drizzle-orm/pg-core'
-import { eq, sql, and } from 'drizzle-orm'
+
+import { posts, userStars } from '../src/db/schema.js'
 
 const ipHits = new Map<string, { count: number; resetAt: number }>()
 
-function rateLimit(req: VercelRequest, res: VercelResponse, limit = 20, windowMs = 60_000): boolean {
-  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? 'unknown'
+function rateLimit(
+  req: VercelRequest,
+  res: VercelResponse,
+  limit = 20,
+  windowMs = 60_000,
+): boolean {
+  const ip =
+    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ??
+    'unknown'
   const now = Date.now()
   const entry = ipHits.get(ip)
-  if (!entry || now > entry.resetAt) { ipHits.set(ip, { count: 1, resetAt: now + windowMs }); return false }
+  if (!entry || now > entry.resetAt) {
+    ipHits.set(ip, { count: 1, resetAt: now + windowMs })
+    return false
+  }
   entry.count++
-  if (entry.count > limit) { res.status(429).json({ error: 'too many requests' }); return true }
+  if (entry.count > limit) {
+    res.status(429).json({ error: 'too many requests' })
+    return true
+  }
   return false
 }
 
@@ -22,22 +36,6 @@ function getUid(req: VercelRequest): string | null {
   const match = cookies.match(/(?:^|; )uid=([^;]*)/)
   return match ? decodeURIComponent(match[1]) : null
 }
-
-const posts = pgTable('posts', {
-  id: serial('id').primaryKey(),
-  author: text('author').notNull(),
-  message: text('message').notNull(),
-  stars: integer('stars').notNull().default(0),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-})
-
-const userStars = pgTable('user_stars', {
-  uid: text('uid').notNull(),
-  postId: integer('post_id').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => [
-  primaryKey({ columns: [table.uid, table.postId] }),
-])
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (rateLimit(req, res)) return
@@ -54,7 +52,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const uid = getUid(req)
 
     if (req.method === 'GET') {
-      if (!uid) { res.json({ starred: [] }); return }
+      if (!uid) {
+        res.json({ starred: [] })
+        return
+      }
       const rows = await db
         .select({ postId: userStars.postId })
         .from(userStars)
@@ -74,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const id = Number(req.query.id)
-    if (!id || isNaN(id)) {
+    if (!id || Number.isNaN(id)) {
       res.status(400).json({ error: 'valid post id required' })
       return
     }

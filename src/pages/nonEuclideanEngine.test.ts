@@ -15,7 +15,10 @@ c *
   })
 
   it('leaves the level 4 sloped outside ground walkable', () => {
-    const source = readFileSync('public/non-euclidean/engine/ground_slope.obj', 'utf8')
+    const source = readFileSync(
+      'public/non-euclidean/engine/ground_slope.obj',
+      'utf8',
+    )
     const mesh = parseEngineMesh(source)
 
     expect(mesh.colliders).toHaveLength(0)

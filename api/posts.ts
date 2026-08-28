@@ -1,20 +1,33 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { desc, eq, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import { pgTable, text, integer, boolean, timestamp, serial } from 'drizzle-orm/pg-core'
-import { desc, eq, sql } from 'drizzle-orm'
 
 import { containsBannedWord } from '../src/bannedWords.js'
+import { posts, users } from '../src/db/schema.js'
 
 const ipHits = new Map<string, { count: number; resetAt: number }>()
 
-function rateLimit(req: VercelRequest, res: VercelResponse, limit = 5, windowMs = 60_000): boolean {
-  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ?? 'unknown'
+function rateLimit(
+  req: VercelRequest,
+  res: VercelResponse,
+  limit = 5,
+  windowMs = 60_000,
+): boolean {
+  const ip =
+    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ??
+    'unknown'
   const now = Date.now()
   const entry = ipHits.get(ip)
-  if (!entry || now > entry.resetAt) { ipHits.set(ip, { count: 1, resetAt: now + windowMs }); return false }
+  if (!entry || now > entry.resetAt) {
+    ipHits.set(ip, { count: 1, resetAt: now + windowMs })
+    return false
+  }
   entry.count++
-  if (entry.count > limit) { res.status(429).json({ error: 'too many requests' }); return true }
+  if (entry.count > limit) {
+    res.status(429).json({ error: 'too many requests' })
+    return true
+  }
   return false
 }
 
@@ -28,23 +41,6 @@ function getUid(req: VercelRequest): string | null {
   const match = cookies.match(/(?:^|; )uid=([^;]*)/)
   return match ? decodeURIComponent(match[1]) : null
 }
-
-const posts = pgTable('posts', {
-  id: serial('id').primaryKey(),
-  author: text('author').notNull(),
-  message: text('message').notNull(),
-  stars: integer('stars').notNull().default(0),
-  country: text('country').notNull().default('US'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-})
-
-const users = pgTable('users', {
-  uid: text('uid').primaryKey(),
-  aliases: text('aliases').array().default([]),
-  banned: boolean('banned').notNull().default(false),
-  bannedAt: timestamp('banned_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-})
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!process.env.DATABASE_URL) {
@@ -78,7 +74,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return
       }
 
-      if (containsBannedWord(String(author)) || containsBannedWord(String(message))) {
+      if (
+        containsBannedWord(String(author)) ||
+        containsBannedWord(String(message))
+      ) {
         if (uid) {
           await db
             .insert(users)

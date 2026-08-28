@@ -1,5 +1,5 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import LowPolyRabbit from '../components/LowPolyRabbit'
 import './Main.css'
 
@@ -27,7 +27,7 @@ function countryFlag(code: string): string {
   const upper = code.toUpperCase()
   if (upper.length !== 2) return ''
   return String.fromCodePoint(
-    ...upper.split('').map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)
+    ...upper.split('').map((c) => 0x1f1e6 + c.charCodeAt(0) - 65),
   )
 }
 
@@ -38,6 +38,7 @@ function getCookie(name: string): string | null {
 
 function setCookie(name: string, value: string, days: number) {
   const expires = new Date(Date.now() + days * 864e5).toUTCString()
+  // biome-ignore lint/suspicious/noDocumentCookie: single first-party uid cookie, no CookieStore need
   document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`
 }
 
@@ -69,9 +70,14 @@ function VisitorCounter() {
     <div className="visitor-counter">
       <span className="counter-label">visitors:</span>
       <span className="counter-digits">
-        {String(display).padStart(6, '0').split('').map((d: string, i: number) => (
-          <span key={i} className="counter-digit">{d}</span>
-        ))}
+        {String(display)
+          .padStart(6, '0')
+          .split('')
+          .map((d: string, i: number) => (
+            <span key={i} className="counter-digit">
+              {d}
+            </span>
+          ))}
       </span>
     </div>
   )
@@ -101,7 +107,10 @@ function Guestbook() {
         if (Array.isArray(d.starred)) setStarred(new Set(d.starred))
       })
       .catch(() => {})
-    fetch('/api/country').then((r) => r.json()).then((d) => setMyCountry(d.country)).catch(() => {})
+    fetch('/api/country')
+      .then((r) => r.json())
+      .then((d) => setMyCountry(d.country))
+      .catch(() => {})
   }, [])
 
   const createPost = useMutation({
@@ -133,11 +142,14 @@ function Guestbook() {
       const prev = queryClient.getQueryData<Post[]>(['posts'])
       const wasStarred = starred.has(id)
       queryClient.setQueryData<Post[]>(['posts'], (old = []) =>
-        old.map((p) => (p.id === id ? { ...p, stars: p.stars + (wasStarred ? -1 : 1) } : p))
+        old.map((p) =>
+          p.id === id ? { ...p, stars: p.stars + (wasStarred ? -1 : 1) } : p,
+        ),
       )
       setStarred((s) => {
         const next = new Set(s)
-        if (wasStarred) next.delete(id); else next.add(id)
+        if (wasStarred) next.delete(id)
+        else next.add(id)
         return next
       })
       return { prev, wasStarred }
@@ -146,7 +158,8 @@ function Guestbook() {
       if (context?.prev) queryClient.setQueryData(['posts'], context.prev)
       setStarred((s) => {
         const next = new Set(s)
-        if (context?.wasStarred) next.add(id); else next.delete(id)
+        if (context?.wasStarred) next.add(id)
+        else next.delete(id)
         return next
       })
     },
@@ -178,10 +191,13 @@ function Guestbook() {
             <div key={post.id} className="guestbook-entry">
               <div className="gb-header">
                 <span>
-                  <span className="gb-name">{post.author} {countryFlag(post.country)}</span>
+                  <span className="gb-name">
+                    {post.author} {countryFlag(post.country)}
+                  </span>
                   <span className="gb-date">{dateStr}</span>
                 </span>
                 <button
+                  type="button"
                   className={`star-btn${starred.has(post.id) ? ' starred' : ''}`}
                   onClick={() => toggleStar.mutate(post.id)}
                   aria-label={`${starred.has(post.id) ? 'Unstar' : 'Star'} post by ${post.author}, ${post.stars} stars`}
@@ -196,12 +212,25 @@ function Guestbook() {
       </div>
 
       {showBanModal && (
-        <div className="ban-overlay" onClick={() => setShowBanModal(false)} role="dialog" aria-modal="true" aria-label="Banned notice">
+        <div
+          className="ban-overlay"
+          onClick={() => setShowBanModal(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Banned notice"
+        >
           <div className="ban-modal" onClick={(e) => e.stopPropagation()}>
             <h2>BANNED</h2>
-            <p>you have been banned from the guestbook for using prohibited language.</p>
+            <p>
+              you have been banned from the guestbook for using prohibited
+              language.
+            </p>
             <p className="ban-skull">&#9760;</p>
-            <button className="ban-close" onClick={() => setShowBanModal(false)}>
+            <button
+              type="button"
+              className="ban-close"
+              onClick={() => setShowBanModal(false)}
+            >
               ok i deserve this
             </button>
           </div>
@@ -211,13 +240,20 @@ function Guestbook() {
       {banned ? (
         <div className="gb-form">
           <h2 className="heading">you are banned from the guestbook</h2>
-          <p className="text" style={{ fontStyle: 'italic' }}>maybe don&apos;t be rude next time &#9760;</p>
+          <p className="text" style={{ fontStyle: 'italic' }}>
+            maybe don&apos;t be rude next time &#9760;
+          </p>
         </div>
       ) : (
         <form className="gb-form" onSubmit={handleSubmit}>
           <h2 className="heading">sign my guestbook!!</h2>
-          <p className="text" style={{ marginBottom: 12 }}>this may be the only chance we will know each other on this tiny blue dot. say something</p>
-          <label htmlFor="gb-author" className="sr-only">Your name</label>
+          <p className="text" style={{ marginBottom: 12 }}>
+            this may be the only chance we will know each other on this tiny
+            blue dot. say something
+          </p>
+          <label htmlFor="gb-author" className="sr-only">
+            Your name
+          </label>
           <input
             id="gb-author"
             className="gb-input"
@@ -228,7 +264,9 @@ function Guestbook() {
             maxLength={50}
             aria-label="Your name"
           />
-          <label htmlFor="gb-message" className="sr-only">Your message</label>
+          <label htmlFor="gb-message" className="sr-only">
+            Your message
+          </label>
           <textarea
             id="gb-message"
             className="gb-textarea"
@@ -239,8 +277,14 @@ function Guestbook() {
             rows={3}
             aria-label="Your message"
           />
-          <button className="gb-submit" type="submit" disabled={createPost.isPending}>
-            {createPost.isPending ? 'posting...' : `>> sign guestbook ${myCountry ? countryFlag(myCountry) : ''}`}
+          <button
+            className="gb-submit"
+            type="submit"
+            disabled={createPost.isPending}
+          >
+            {createPost.isPending
+              ? 'posting...'
+              : `>> sign guestbook ${myCountry ? countryFlag(myCountry) : ''}`}
           </button>
         </form>
       )}
@@ -266,8 +310,20 @@ const PIANO_KEYS = [
 ]
 
 const KEYBOARD_MAP: Record<string, number> = {
-  a: 0, w: 1, s: 2, e: 3, d: 4, f: 5,
-  t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12, l: 13,
+  a: 0,
+  w: 1,
+  s: 2,
+  e: 3,
+  d: 4,
+  f: 5,
+  t: 6,
+  g: 7,
+  y: 8,
+  h: 9,
+  u: 10,
+  j: 11,
+  k: 12,
+  l: 13,
 }
 
 function RetroPiano() {
@@ -314,10 +370,12 @@ function RetroPiano() {
   return (
     <div className="piano-wrapper">
       <div className="piano-label">~ click or use keyboard (A-K) ~</div>
+      {/* biome-ignore lint/a11y/useSemanticElements: styled div grid, not a form fieldset */}
       <div className="piano" role="group" aria-label="Piano keyboard">
         {PIANO_KEYS.map((key, i) => (
           <button
             key={i}
+            type="button"
             className={`piano-key ${key.black ? 'piano-black' : 'piano-white'} ${activeKeys.has(i) ? 'piano-active' : ''}`}
             onMouseDown={() => playNote(key.freq, i)}
             aria-label={`Play note ${key.note}`}
@@ -348,6 +406,7 @@ function ScaredPortal() {
     <div className="portal-section portal-scared">
       <p className="portal-text">do you want to open the portal?</p>
       <button
+        type="button"
         className="portal-scared-btn"
         onClick={() => setOpened(true)}
       >
@@ -365,7 +424,8 @@ function TabContent({ tab }: { tab: Tab }) {
           <h1 className="title">welcome to my site</h1>
           <div className="section">
             <p className="text">
-              this website is perpetually under construction, just like all of us
+              this website is perpetually under construction, just like all of
+              us
             </p>
           </div>
           <Guestbook />
@@ -392,8 +452,9 @@ function TabContent({ tab }: { tab: Tab }) {
           <div className="section">
             <h2 className="heading">who am i?</h2>
             <p className="text">
-              I&apos;m Noah, a developer. I&apos;ve spent most of my professional career working
-              at startups, but I also have experience working at Instagram and Google.
+              I&apos;m Noah, a developer. I&apos;ve spent most of my
+              professional career working at startups, but I also have
+              experience working at Instagram and Google.
             </p>
             <p className="text">
               I took the assets for this website from a singer I like.
@@ -424,7 +485,14 @@ function TabContent({ tab }: { tab: Tab }) {
           <div className="section">
             <h2 className="heading">gallery</h2>
             <div className="art-grid">
-              {['#ff006e', '#00ff99', '#3388ff', '#ffff00', '#ff66ff', '#00ccff'].map((color, i) => (
+              {[
+                '#ff006e',
+                '#00ff99',
+                '#3388ff',
+                '#ffff00',
+                '#ff66ff',
+                '#00ccff',
+              ].map((color, i) => (
                 <div
                   key={i}
                   className="art-tile"
@@ -446,9 +514,27 @@ function TabContent({ tab }: { tab: Tab }) {
           <div className="section">
             <h2 className="heading">my links</h2>
             <ul className="link-list">
-              <li><a href="https://github.com/imnoahcook" target="_blank" rel="noopener noreferrer">{'>> '}github</a></li>
-              <li><a href="https://linkedin.com/in/noahpcook" target="_blank" rel="noopener noreferrer">{'>> '}linkedin</a></li>
-              <li><a href="mailto:imnoahcook@gmail.com">{'>> '}email me</a></li>
+              <li>
+                <a
+                  href="https://github.com/imnoahcook"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {'>> '}github
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://linkedin.com/in/noahpcook"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {'>> '}linkedin
+                </a>
+              </li>
+              <li>
+                <a href="mailto:imnoahcook@gmail.com">{'>> '}email me</a>
+              </li>
             </ul>
           </div>
         </>
@@ -479,14 +565,22 @@ export default function Main() {
           {sidebarLinks.map((link) => (
             <button
               key={link.label}
+              type="button"
               onClick={() => {
                 setActiveTab(link.label)
-                window.dispatchEvent(new CustomEvent('rabbit-quip', { detail: 'tab' }))
+                window.dispatchEvent(
+                  new CustomEvent('rabbit-quip', { detail: 'tab' }),
+                )
               }}
               className={`sidebar-link${activeTab === link.label ? ' sidebar-active' : ''}`}
               aria-current={activeTab === link.label ? 'page' : undefined}
             >
-              <img src={link.icon} alt="" className="sidebar-icon" aria-hidden="true" />
+              <img
+                src={link.icon}
+                alt=""
+                className="sidebar-icon"
+                aria-hidden="true"
+              />
               <span className="sidebar-label">{link.label}</span>
             </button>
           ))}

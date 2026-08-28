@@ -1,7 +1,7 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './index.css'
 import Layout from './components/Layout'
 import Main from './pages/Main'
@@ -24,97 +24,370 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Main />} />
-          <Route path="/portal" element={<Navigate replace to="/non-euclidean/level6" />} />
-          <Route path="/vault/porcelain-gate-7e9b13" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading portal...</div>}>
-              <Portal />
-            </Suspense>
-          } />
-          <Route path="/inspection" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading inspection...</div>}>
-              <Inspection />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclidean />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/demos" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclidean />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level1" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanLevel1 />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level1/:x/:y/:z/:yaw/:pitch" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanLevel1 />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level2-3" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanLevel23 />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level2-3/:x/:y/:z/:yaw/:pitch" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanLevel23 />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level2-6" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanLevel26 />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level2-6/:x/:y/:z/:yaw/:pitch" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanLevel26 />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level3" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanLevel3 />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level3/:x/:y/:z/:yaw/:pitch" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanLevel3 />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level4" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanStub title="Level4" source="Level4.cpp" />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level4/:x/:y/:z/:yaw/:pitch" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanStub title="Level4" source="Level4.cpp" />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level5" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanStub title="Level5" source="Level5.cpp" />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level5/:x/:y/:z/:yaw/:pitch" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanStub title="Level5" source="Level5.cpp" />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level6" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanLevel6 />
-            </Suspense>
-          } />
-          <Route path="/non-euclidean/level6/:x/:y/:z/:yaw/:pitch" element={
-            <Suspense fallback={<div style={{ color: '#888', textAlign: 'center', paddingTop: '40vh' }}>loading non-euclidean...</div>}>
-              <NonEuclideanLevel6 />
-            </Suspense>
-          } />
+          <Route
+            path="/portal"
+            element={<Navigate replace to="/non-euclidean/level6" />}
+          />
+          <Route
+            path="/vault/porcelain-gate-7e9b13"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading portal...
+                  </div>
+                }
+              >
+                <Portal />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/inspection"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading inspection...
+                  </div>
+                }
+              >
+                <Inspection />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclidean />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/demos"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclidean />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level1"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanLevel1 />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level1/:x/:y/:z/:yaw/:pitch"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanLevel1 />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level2-3"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanLevel23 />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level2-3/:x/:y/:z/:yaw/:pitch"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanLevel23 />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level2-6"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanLevel26 />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level2-6/:x/:y/:z/:yaw/:pitch"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanLevel26 />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level3"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanLevel3 />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level3/:x/:y/:z/:yaw/:pitch"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanLevel3 />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level4"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanStub title="Level4" source="Level4.cpp" />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level4/:x/:y/:z/:yaw/:pitch"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanStub title="Level4" source="Level4.cpp" />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level5"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanStub title="Level5" source="Level5.cpp" />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level5/:x/:y/:z/:yaw/:pitch"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanStub title="Level5" source="Level5.cpp" />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level6"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanLevel6 />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/non-euclidean/level6/:x/:y/:z/:yaw/:pitch"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: '#888',
+                      textAlign: 'center',
+                      paddingTop: '40vh',
+                    }}
+                  >
+                    loading non-euclidean...
+                  </div>
+                }
+              >
+                <NonEuclideanLevel6 />
+              </Suspense>
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>

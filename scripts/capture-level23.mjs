@@ -1,6 +1,6 @@
-import { mkdir } from 'fs/promises'
-import { spawn } from 'child_process'
-import { setTimeout as delay } from 'timers/promises'
+import { spawn } from 'node:child_process'
+import { mkdir } from 'node:fs/promises'
+import { setTimeout as delay } from 'node:timers/promises'
 import puppeteer from 'puppeteer'
 
 const PORT = 4173
@@ -42,9 +42,13 @@ function filterViews(term) {
 }
 
 function startDevServer() {
-  const child = spawn('npm', ['run', 'dev', '--', '--host', HOST, '--port', String(PORT)], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-  })
+  const child = spawn(
+    'npm',
+    ['run', 'dev', '--', '--host', HOST, '--port', String(PORT)],
+    {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    },
+  )
 
   child.stdout.on('data', (chunk) => {
     process.stdout.write(String(chunk))

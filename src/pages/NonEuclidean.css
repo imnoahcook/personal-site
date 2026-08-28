@@ -30,7 +30,7 @@
   background: rgba(7, 7, 11, 0.82);
   border: 1px solid rgba(210, 191, 160, 0.22);
   color: #e7dcc9;
-  font-family: 'Space Mono', monospace;
+  font-family: "Space Mono", monospace;
   z-index: 2;
   pointer-events: auto;
   user-select: text;

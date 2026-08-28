@@ -130,7 +130,11 @@ export function createPortalMaterial() {
   })
 }
 
-export function createAtlasTextureMaterial(texture: THREE.Texture, columns: number, rows: number) {
+export function createAtlasTextureMaterial(
+  texture: THREE.Texture,
+  columns: number,
+  rows: number,
+) {
   return new THREE.ShaderMaterial({
     uniforms: {
       atlasGrid: { value: new THREE.Vector2(columns, rows) },
@@ -154,15 +158,24 @@ export function setupTexture(texture: THREE.Texture, repeatX = 1, repeatY = 1) {
   texture.needsUpdate = true
 }
 
-export function setRendererLocalClipping(renderer: THREE.WebGLRenderer, enabled: boolean) {
+export function setRendererLocalClipping(
+  renderer: THREE.WebGLRenderer,
+  enabled: boolean,
+) {
   renderer.localClippingEnabled = enabled
 }
 
-export function setRendererXrEnabled(renderer: THREE.WebGLRenderer, enabled: boolean) {
+export function setRendererXrEnabled(
+  renderer: THREE.WebGLRenderer,
+  enabled: boolean,
+) {
   renderer.xr.enabled = enabled
 }
 
-export function setRendererClippingPlanes(renderer: THREE.WebGLRenderer, clippingPlanes: THREE.Plane[]) {
+export function setRendererClippingPlanes(
+  renderer: THREE.WebGLRenderer,
+  clippingPlanes: THREE.Plane[],
+) {
   renderer.clippingPlanes = clippingPlanes
 }
 
@@ -214,14 +227,20 @@ export function resolveCameraOverride(
   }
 }
 
-export function applyCameraOverride(camera: THREE.PerspectiveCamera, override: CameraOverride) {
+export function applyCameraOverride(
+  camera: THREE.PerspectiveCamera,
+  override: CameraOverride,
+) {
   camera.rotation.order = 'YXZ'
   camera.position.copy(override.position)
   camera.rotation.set(override.pitch, override.yaw, 0)
   camera.updateMatrixWorld(true)
 }
 
-export function getNearestPortalDistance(cameraPosition: THREE.Vector3, portals: PortalRuntime[]) {
+export function getNearestPortalDistance(
+  cameraPosition: THREE.Vector3,
+  portals: PortalRuntime[],
+) {
   let nearest = Infinity
 
   for (const portal of portals) {
@@ -239,7 +258,8 @@ export function getNearestPortalDistance(cameraPosition: THREE.Vector3, portals:
     const clampedX = THREE.MathUtils.clamp(xDot / (xMagSq || 1), -1, 1)
     const clampedY = THREE.MathUtils.clamp(yDot / (yMagSq || 1), -1, 1)
 
-    tempClosestPoint.copy(tempPortalPosition)
+    tempClosestPoint
+      .copy(tempPortalPosition)
       .addScaledVector(tempXAxis, clampedX)
       .addScaledVector(tempYAxis, clampedY)
 
@@ -249,7 +269,10 @@ export function getNearestPortalDistance(cameraPosition: THREE.Vector3, portals:
   return nearest
 }
 
-export function updateCameraNearFromPortals(camera: THREE.PerspectiveCamera, portals: PortalRuntime[]) {
+export function updateCameraNearFromPortals(
+  camera: THREE.PerspectiveCamera,
+  portals: PortalRuntime[],
+) {
   const nearest = getNearestPortalDistance(camera.position, portals)
   const near = THREE.MathUtils.clamp(nearest * 0.5, NEAR_MIN, NEAR_MAX)
   camera.near = near
@@ -281,10 +304,7 @@ function addTriangle(
       vertices[item.v * 3 + 1],
       vertices[item.v * 3 + 2],
     )
-    targetUvs.push(
-      uvs[item.uv * 3] ?? 0,
-      uvs[item.uv * 3 + 1] ?? 0,
-    )
+    targetUvs.push(uvs[item.uv * 3] ?? 0, uvs[item.uv * 3 + 1] ?? 0)
     targetUvTiles.push(uvs[item.uv * 3 + 2] ?? 0)
   }
 }
@@ -353,8 +373,32 @@ export function parseEngineMesh(source: string): EngineMeshData {
         const bt = uvCount - 3
         const ct = uvCount - 2
         const dt = uvCount - 1
-        addTriangle(positions, uvs, uvTiles, vertexPalette, uvPalette, a, b, c, at, bt, ct)
-        addTriangle(positions, uvs, uvTiles, vertexPalette, uvPalette, c, d, a, ct, dt, at)
+        addTriangle(
+          positions,
+          uvs,
+          uvTiles,
+          vertexPalette,
+          uvPalette,
+          a,
+          b,
+          c,
+          at,
+          bt,
+          ct,
+        )
+        addTriangle(
+          positions,
+          uvs,
+          uvTiles,
+          vertexPalette,
+          uvPalette,
+          c,
+          d,
+          a,
+          ct,
+          dt,
+          at,
+        )
         continue
       }
 
@@ -448,7 +492,10 @@ export function parseEngineMesh(source: string): EngineMeshData {
   }
 
   const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  geometry.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(positions, 3),
+  )
   geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
   geometry.setAttribute('uvTile', new THREE.Float32BufferAttribute(uvTiles, 1))
   geometry.computeVertexNormals()
@@ -485,8 +532,10 @@ export function carvePortalColliderOpening(
   const facingX = Math.abs(Math.sin(portalRotationY)) > 0.5
   const openingMin = (facingX ? portalPosition.z : portalPosition.x) - halfWidth
   const openingMax = (facingX ? portalPosition.z : portalPosition.x) + halfWidth
-  const planeMin = (facingX ? portalPosition.x : portalPosition.z) - halfThickness
-  const planeMax = (facingX ? portalPosition.x : portalPosition.z) + halfThickness
+  const planeMin =
+    (facingX ? portalPosition.x : portalPosition.z) - halfThickness
+  const planeMax =
+    (facingX ? portalPosition.x : portalPosition.z) + halfThickness
   const carved: Collider2D[] = []
 
   for (const collider of colliders) {
@@ -495,7 +544,8 @@ export function carvePortalColliderOpening(
     const planeColliderMin = facingX ? collider.minX : collider.minZ
     const planeColliderMax = facingX ? collider.maxX : collider.maxZ
     const intersectsOpening = openingMax > lateralMin && openingMin < lateralMax
-    const intersectsPlane = planeMax > planeColliderMin && planeMin < planeColliderMax
+    const intersectsPlane =
+      planeMax > planeColliderMin && planeMin < planeColliderMax
 
     if (!intersectsOpening || !intersectsPlane) {
       carved.push(collider)
@@ -503,28 +553,57 @@ export function carvePortalColliderOpening(
     }
 
     if (lateralMin < openingMin) {
-      carved.push(facingX
-        ? { minX: collider.minX, maxX: collider.maxX, minZ: lateralMin, maxZ: openingMin }
-        : { minX: lateralMin, maxX: openingMin, minZ: collider.minZ, maxZ: collider.maxZ })
+      carved.push(
+        facingX
+          ? {
+              minX: collider.minX,
+              maxX: collider.maxX,
+              minZ: lateralMin,
+              maxZ: openingMin,
+            }
+          : {
+              minX: lateralMin,
+              maxX: openingMin,
+              minZ: collider.minZ,
+              maxZ: collider.maxZ,
+            },
+      )
     }
 
     if (lateralMax > openingMax) {
-      carved.push(facingX
-        ? { minX: collider.minX, maxX: collider.maxX, minZ: openingMax, maxZ: lateralMax }
-        : { minX: openingMax, maxX: lateralMax, minZ: collider.minZ, maxZ: collider.maxZ })
+      carved.push(
+        facingX
+          ? {
+              minX: collider.minX,
+              maxX: collider.maxX,
+              minZ: openingMax,
+              maxZ: lateralMax,
+            }
+          : {
+              minX: openingMax,
+              maxX: lateralMax,
+              minZ: collider.minZ,
+              maxZ: collider.maxZ,
+            },
+      )
     }
   }
 
   return carved
 }
 
-export function collides(x: number, z: number, colliders: Collider2D[]): boolean {
-  return colliders.some((collider) => (
-    x + PLAYER_RADIUS > collider.minX &&
-    x - PLAYER_RADIUS < collider.maxX &&
-    z + PLAYER_RADIUS > collider.minZ &&
-    z - PLAYER_RADIUS < collider.maxZ
-  ))
+export function collides(
+  x: number,
+  z: number,
+  colliders: Collider2D[],
+): boolean {
+  return colliders.some(
+    (collider) =>
+      x + PLAYER_RADIUS > collider.minX &&
+      x - PLAYER_RADIUS < collider.maxX &&
+      z + PLAYER_RADIUS > collider.minZ &&
+      z - PLAYER_RADIUS < collider.maxZ,
+  )
 }
 
 export function movePlayerCamera(
@@ -565,7 +644,10 @@ export function getPortalWarpMatrix(
   source.updateWorldMatrix(true, false)
   target.updateWorldMatrix(true, false)
   tempSourceInverse.copy(source.matrixWorld).invert()
-  return outMatrix.copy(target.matrixWorld).multiply(tempSourceInverse).multiply(matrixWorld)
+  return outMatrix
+    .copy(target.matrixWorld)
+    .multiply(tempSourceInverse)
+    .multiply(matrixWorld)
 }
 
 export function getPortalDeltaMatrix(
@@ -601,28 +683,51 @@ function getPortalNormal(portal: THREE.Object3D) {
   return tempPortalNormal.set(0, 0, -1).applyQuaternion(tempTargetQuat)
 }
 
-export function getPortalPlaneDistance(position: THREE.Vector3, portal: THREE.Object3D) {
+export function getPortalPlaneDistance(
+  position: THREE.Vector3,
+  portal: THREE.Object3D,
+) {
   portal.updateWorldMatrix(true, false)
   const portalPosition = portal.getWorldPosition(tempPortalPosition)
   const portalNormal = getPortalNormal(portal)
   return tempToPortal.copy(position).sub(portalPosition).dot(portalNormal)
 }
 
-export function getPortalTargetIndex(portal: PortalRuntime, position: THREE.Vector3) {
+export function getPortalTargetIndex(
+  portal: PortalRuntime,
+  position: THREE.Vector3,
+) {
   return getPortalPlaneDistance(position, portal.mesh) > 0
     ? portal.frontTargetIndex
     : portal.backTargetIndex
 }
 
-export function getPortalPlaneScaleRatio(source: THREE.Object3D, target: THREE.Object3D) {
+export function getPortalPlaneScaleRatio(
+  source: THREE.Object3D,
+  target: THREE.Object3D,
+) {
   source.updateWorldMatrix(true, false)
   target.updateWorldMatrix(true, false)
 
-  source.matrixWorld.decompose(tempPortalPosition, tempTargetQuat, tempPortalSourceScale)
-  target.matrixWorld.decompose(tempClosestPoint, tempTargetQuat, tempPortalTargetScale)
+  source.matrixWorld.decompose(
+    tempPortalPosition,
+    tempTargetQuat,
+    tempPortalSourceScale,
+  )
+  target.matrixWorld.decompose(
+    tempClosestPoint,
+    tempTargetQuat,
+    tempPortalTargetScale,
+  )
 
-  const sourceAreaScale = Math.max(Math.abs(tempPortalSourceScale.x * tempPortalSourceScale.y), 0.00001)
-  const targetAreaScale = Math.max(Math.abs(tempPortalTargetScale.x * tempPortalTargetScale.y), 0.00001)
+  const sourceAreaScale = Math.max(
+    Math.abs(tempPortalSourceScale.x * tempPortalSourceScale.y),
+    0.00001,
+  )
+  const targetAreaScale = Math.max(
+    Math.abs(tempPortalTargetScale.x * tempPortalTargetScale.y),
+    0.00001,
+  )
 
   return Math.sqrt(targetAreaScale / sourceAreaScale)
 }
@@ -657,13 +762,16 @@ export function applyPortalObliqueClip(
 ) {
   const portalPosition = sourcePortal.getWorldPosition(tempPortalPosition)
   const normal = getPortalNormal(sourcePortal).clone()
-  const frontDirection = sourceCamera.position.clone().sub(portalPosition).dot(normal) > 0
+  const frontDirection =
+    sourceCamera.position.clone().sub(portalPosition).dot(normal) > 0
 
   if (frontDirection) {
     normal.multiplyScalar(-1)
   }
 
-  const clipPoint = portalPosition.clone().sub(normal.clone().multiplyScalar(extraClip))
+  const clipPoint = portalPosition
+    .clone()
+    .sub(normal.clone().multiplyScalar(extraClip))
   const clipNormal = normal.clone()
 
   tempClipPlane.setFromNormalAndCoplanarPoint(clipNormal, clipPoint)
@@ -689,7 +797,9 @@ export function applyPortalObliqueClip(
   elements[6] = tempClipVector.y
   elements[10] = tempClipVector.z + 1
   elements[14] = tempClipVector.w
-  portalCamera.projectionMatrixInverse.copy(portalCamera.projectionMatrix).invert()
+  portalCamera.projectionMatrixInverse
+    .copy(portalCamera.projectionMatrix)
+    .invert()
 }
 
 export function tryTraversePortal(
@@ -706,7 +816,11 @@ export function tryTraversePortal(
 
   const portalPosition = source.getWorldPosition(tempPortalPosition)
   const portalNormal = getPortalNormal(source).clone()
-  tempPortalBump.copy(portalNormal).multiplyScalar(prevPosition.clone().sub(portalPosition).dot(portalNormal) > 0 ? 1 : -1)
+  tempPortalBump
+    .copy(portalNormal)
+    .multiplyScalar(
+      prevPosition.clone().sub(portalPosition).dot(portalNormal) > 0 ? 1 : -1,
+    )
   tempPortalBump.multiplyScalar(PORTAL_TRAVERSE_OFFSET)
 
   tempPrevWorld.copy(prevPosition)
@@ -729,10 +843,14 @@ export function tryTraversePortal(
   tempPortalXAxis.setFromMatrixColumn(source.matrixWorld, 0)
   tempPortalYAxis.setFromMatrixColumn(source.matrixWorld, 1)
 
-  if (Math.abs(tempIntersect.dot(tempPortalXAxis)) >= tempPortalXAxis.lengthSq()) {
+  if (
+    Math.abs(tempIntersect.dot(tempPortalXAxis)) >= tempPortalXAxis.lengthSq()
+  ) {
     return false
   }
-  if (Math.abs(tempIntersect.dot(tempPortalYAxis)) >= tempPortalYAxis.lengthSq()) {
+  if (
+    Math.abs(tempIntersect.dot(tempPortalYAxis)) >= tempPortalYAxis.lengthSq()
+  ) {
     return false
   }
 
@@ -744,7 +862,10 @@ export function tryTraversePortal(
   target.updateWorldMatrix(true, false)
   target.getWorldPosition(tempPortalPosition)
   const targetNormal = getPortalNormal(target).clone()
-  const exitDistance = tempToPortal.copy(tempClosestPoint).sub(tempPortalPosition).dot(targetNormal)
+  const exitDistance = tempToPortal
+    .copy(tempClosestPoint)
+    .sub(tempPortalPosition)
+    .dot(targetNormal)
   if (Math.abs(exitDistance) < PORTAL_PUSH) {
     tempClosestPoint.addScaledVector(
       targetNormal,
@@ -791,7 +912,9 @@ function renderSceneRecursive(
   const originalCameraMask = camera.layers.mask
   const originalAutoClear = renderer.autoClear
   const originalBackground = scene.background
-  const savedPortalStates = portals.map((portal) => getPortalTextureState(portal.mesh))
+  const savedPortalStates = portals.map((portal) =>
+    getPortalTextureState(portal.mesh),
+  )
   const nextPortalTextures = portals.map(() => null as THREE.Texture | null)
   const allowNestedPortals = renderTarget === null
   const hiddenIndices: number[] = []
@@ -808,7 +931,12 @@ function renderSceneRecursive(
       const targetIndex = getPortalTargetIndex(portal, camera.position)
       const target = portals[targetIndex]
       updatePortalCamera(portal.mesh, target.mesh, camera, portal.camera)
-      applyPortalObliqueClip(portal.camera, portal.camera, target.mesh, Math.min(rootExtraClip, PORTAL_RENDER_CLIP_OFFSET))
+      applyPortalObliqueClip(
+        portal.camera,
+        portal.camera,
+        target.mesh,
+        Math.min(rootExtraClip, PORTAL_RENDER_CLIP_OFFSET),
+      )
       renderSceneRecursive(
         renderer,
         scene,
@@ -868,8 +996,20 @@ export function renderRecursivePortals(
 ) {
   scene.updateMatrixWorld(true)
   camera.updateMatrixWorld(true)
-  const rootExtraClip = Math.min(getNearestPortalDistance(camera.position, portals) * 0.5, 0.1)
-  renderSceneRecursive(renderer, scene, camera, portals, recursionDepth, -1, null, rootExtraClip)
+  const rootExtraClip = Math.min(
+    getNearestPortalDistance(camera.position, portals) * 0.5,
+    0.1,
+  )
+  renderSceneRecursive(
+    renderer,
+    scene,
+    camera,
+    portals,
+    recursionDepth,
+    -1,
+    null,
+    rootExtraClip,
+  )
   setRendererClippingPlanes(renderer, [])
   renderer.setRenderTarget(null)
 }

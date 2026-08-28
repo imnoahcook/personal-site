@@ -59,34 +59,52 @@ export default function NonEuclidean() {
       <div className="non-euclidean-ui non-euclidean-ui--hub">
         <p className="non-euclidean-title">NON-EUCLIDEAN DEMOS</p>
         <p className="non-euclidean-copy">
-          Route set based on the local `_context/NonEuclidean` engine. The playable browser ports are
-          wired below.
+          Route set based on the local `_context/NonEuclidean` engine. The
+          playable browser ports are wired below.
         </p>
         <p className="non-euclidean-copy">
           Rebuilt in Three.js from the original C++ demo shown in{' '}
-          <a href="https://www.youtube.com/watch?v=kEB11PQ9Eo8" target="_blank" rel="noreferrer">
+          <a
+            href="https://www.youtube.com/watch?v=kEB11PQ9Eo8"
+            target="_blank"
+            rel="noreferrer"
+          >
             this YouTube video
-          </a>.
+          </a>
+          .
         </p>
 
         <div className="non-euclidean-demo-list">
-          {DEMOS.map((demo) => (
+          {DEMOS.map((demo) =>
             demo.status === 'live' ? (
-              <Link key={demo.id} className="non-euclidean-demo-card" to={`/non-euclidean/${demo.id}`}>
+              <Link
+                key={demo.id}
+                className="non-euclidean-demo-card"
+                to={`/non-euclidean/${demo.id}`}
+              >
                 <span className="non-euclidean-demo-heading">{demo.title}</span>
-                <span className="non-euclidean-demo-subtitle">{demo.subtitle}</span>
+                <span className="non-euclidean-demo-subtitle">
+                  {demo.subtitle}
+                </span>
                 <span className="non-euclidean-demo-source">{demo.source}</span>
                 <span className="non-euclidean-demo-status">{demo.status}</span>
               </Link>
             ) : (
-              <div key={demo.id} className="non-euclidean-demo-card non-euclidean-demo-card--todo">
+              <div
+                key={demo.id}
+                className="non-euclidean-demo-card non-euclidean-demo-card--todo"
+              >
                 <span className="non-euclidean-demo-heading">{demo.title}</span>
-                <span className="non-euclidean-demo-subtitle">{demo.subtitle}</span>
+                <span className="non-euclidean-demo-subtitle">
+                  {demo.subtitle}
+                </span>
                 <span className="non-euclidean-demo-source">{demo.source}</span>
-                <span className="non-euclidean-demo-status non-euclidean-demo-status--todo">{demo.status}</span>
+                <span className="non-euclidean-demo-status non-euclidean-demo-status--todo">
+                  {demo.status}
+                </span>
               </div>
-            )
-          ))}
+            ),
+          )}
         </div>
 
         <div className="non-euclidean-links">

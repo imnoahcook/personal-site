@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { containsBannedWord } from './bannedWords'
 
 describe('containsBannedWord', () => {
@@ -91,7 +91,9 @@ describe('containsBannedWord', () => {
   it('does not ban normal messages', () => {
     expect(containsBannedWord('awesome site dude!')).toBe(false)
     expect(containsBannedWord('love the stars background')).toBe(false)
-    expect(containsBannedWord('how do i make my site look like this')).toBe(false)
+    expect(containsBannedWord('how do i make my site look like this')).toBe(
+      false,
+    )
     expect(containsBannedWord('this is really cool')).toBe(false)
     expect(containsBannedWord('hello world')).toBe(false)
     expect(containsBannedWord('i love coding')).toBe(false)

@@ -1,8 +1,8 @@
-import { useRef, useEffect, useState } from 'react'
-import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
 import { PointerLockControls, useGLTF } from '@react-three/drei'
-import { SimplifyModifier } from 'three/examples/jsm/modifiers/SimplifyModifier.js'
+import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber'
+import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { SimplifyModifier } from 'three/examples/jsm/modifiers/SimplifyModifier.js'
 import './Inspection.css'
 
 const PS1_SHADER_PATCH_FLAG = '__inspectionPs1ShaderPatched__'
@@ -27,12 +27,18 @@ interface Ps1StyleOptions {
   simplifyRatio?: number
 }
 
-function patchChunk(source: string, needle: string, replacement: string): string {
+function patchChunk(
+  source: string,
+  needle: string,
+  replacement: string,
+): string {
   return source.includes(needle) ? source.replace(needle, replacement) : source
 }
 
 function ensureInspectionPs1ShaderChunks() {
-  const globalFlags = globalThis as typeof globalThis & { [PS1_SHADER_PATCH_FLAG]?: boolean }
+  const globalFlags = globalThis as typeof globalThis & {
+    [PS1_SHADER_PATCH_FLAG]?: boolean
+  }
   if (globalFlags[PS1_SHADER_PATCH_FLAG]) return
 
   THREE.ShaderChunk.uv_pars_vertex = patchChunk(
@@ -118,7 +124,10 @@ function ensureInspectionPs1ShaderChunks() {
   globalFlags[PS1_SHADER_PATCH_FLAG] = true
 }
 
-function applyPs1MaterialStyle(root: THREE.Object3D, options?: Ps1StyleOptions) {
+function applyPs1MaterialStyle(
+  root: THREE.Object3D,
+  options?: Ps1StyleOptions,
+) {
   const affineUv = options?.affineUv ?? false
   const simplify = options?.simplify ?? true
   const simplifyRatio = options?.simplifyRatio ?? 0.55
@@ -130,7 +139,9 @@ function applyPs1MaterialStyle(root: THREE.Object3D, options?: Ps1StyleOptions) 
       child.geometry = simplifyPs1Geometry(child.geometry, simplifyRatio)
     }
 
-    const materials = Array.isArray(child.material) ? child.material : [child.material]
+    const materials = Array.isArray(child.material)
+      ? child.material
+      : [child.material]
     for (const material of materials) {
       if (!(material instanceof THREE.Material)) continue
 
@@ -138,9 +149,16 @@ function applyPs1MaterialStyle(root: THREE.Object3D, options?: Ps1StyleOptions) 
       let needsMaterialUpdate = false
 
       if (affineUv) {
-        texturedMaterial.defines = { ...(texturedMaterial.defines as Record<string, unknown> | undefined), USE_PS1_AFFINE_UV: '' }
-      } else if (texturedMaterial.defines && 'USE_PS1_AFFINE_UV' in texturedMaterial.defines) {
-        delete (texturedMaterial.defines as Record<string, unknown>).USE_PS1_AFFINE_UV
+        texturedMaterial.defines = {
+          ...(texturedMaterial.defines as Record<string, unknown> | undefined),
+          USE_PS1_AFFINE_UV: '',
+        }
+      } else if (
+        texturedMaterial.defines &&
+        'USE_PS1_AFFINE_UV' in texturedMaterial.defines
+      ) {
+        delete (texturedMaterial.defines as Record<string, unknown>)
+          .USE_PS1_AFFINE_UV
       }
 
       for (const key of PS1_TEXTURE_KEYS) {
@@ -154,21 +172,33 @@ function applyPs1MaterialStyle(root: THREE.Object3D, options?: Ps1StyleOptions) 
         texture.needsUpdate = true
       }
 
-      if ('flatShading' in texturedMaterial && texturedMaterial.flatShading !== true) {
+      if (
+        'flatShading' in texturedMaterial &&
+        texturedMaterial.flatShading !== true
+      ) {
         texturedMaterial.flatShading = true
         needsMaterialUpdate = true
       }
 
-      if ('normalMap' in texturedMaterial && texturedMaterial.normalMap instanceof THREE.Texture) {
+      if (
+        'normalMap' in texturedMaterial &&
+        texturedMaterial.normalMap instanceof THREE.Texture
+      ) {
         texturedMaterial.normalMap = null
         needsMaterialUpdate = true
       }
 
-      if ('roughness' in texturedMaterial && typeof texturedMaterial.roughness === 'number') {
+      if (
+        'roughness' in texturedMaterial &&
+        typeof texturedMaterial.roughness === 'number'
+      ) {
         texturedMaterial.roughness = Math.max(texturedMaterial.roughness, 0.85)
       }
 
-      if ('metalness' in texturedMaterial && typeof texturedMaterial.metalness === 'number') {
+      if (
+        'metalness' in texturedMaterial &&
+        typeof texturedMaterial.metalness === 'number'
+      ) {
         texturedMaterial.metalness *= 0.35
       }
 
@@ -209,7 +239,11 @@ function createDinerFloorTexture() {
 
 const DINER_FLOOR_TEXTURE = createDinerFloorTexture()
 
-function setupPs1Texture(texture: THREE.Texture, repeatX: number, repeatY: number) {
+function setupPs1Texture(
+  texture: THREE.Texture,
+  repeatX: number,
+  repeatY: number,
+) {
   texture.colorSpace = THREE.SRGBColorSpace
   texture.wrapS = THREE.RepeatWrapping
   texture.wrapT = THREE.RepeatWrapping
@@ -228,15 +262,24 @@ function setupPs1SpriteTexture(texture: THREE.Texture) {
   texture.needsUpdate = true
 }
 
-function simplifyPs1Geometry(geometry: THREE.BufferGeometry, simplifyRatio = 0.55) {
+function simplifyPs1Geometry(
+  geometry: THREE.BufferGeometry,
+  simplifyRatio = 0.55,
+) {
   const position = geometry.getAttribute('position')
   if (!position) return geometry
 
   const vertexCount = position.count
   if (vertexCount <= 96) return geometry
 
-  const targetVertexCount = Math.max(48, Math.floor(vertexCount * simplifyRatio))
-  const removeCount = Math.min(vertexCount - 24, vertexCount - targetVertexCount)
+  const targetVertexCount = Math.max(
+    48,
+    Math.floor(vertexCount * simplifyRatio),
+  )
+  const removeCount = Math.min(
+    vertexCount - 24,
+    vertexCount - targetVertexCount,
+  )
   if (removeCount <= 0) return geometry
 
   try {
@@ -274,12 +317,15 @@ const HIDDEN_ROOM_HALF_W = 18
 const HIDDEN_ROOM_HALF_D = 16
 const HIDDEN_ROOM_DOOR_HALF_D = 1
 const HIDDEN_ROOM_SIDE_SEGMENT_D = HIDDEN_ROOM_HALF_D - HIDDEN_ROOM_DOOR_HALF_D
-const HIDDEN_ROOM_SIDE_SEGMENT_OFFSET_Z = (HIDDEN_ROOM_HALF_D + HIDDEN_ROOM_DOOR_HALF_D) / 2
+const HIDDEN_ROOM_SIDE_SEGMENT_OFFSET_Z =
+  (HIDDEN_ROOM_HALF_D + HIDDEN_ROOM_DOOR_HALF_D) / 2
 
 /* ── collision AABB ─────────────────────────────────── */
 interface AABB {
-  minX: number; maxX: number
-  minZ: number; maxZ: number
+  minX: number
+  maxX: number
+  minZ: number
+  maxZ: number
 }
 
 // box(centerX, centerZ, halfW, halfD)
@@ -288,7 +334,12 @@ function box(cx: number, cz: number, hw: number, hd: number): AABB {
 }
 
 function isInsideDinerFootprint(position: { x: number; z: number }) {
-  return position.x > -W - 0.5 && position.x < W + 0.5 && position.z > -W - 0.5 && position.z < W + 0.5
+  return (
+    position.x > -W - 0.5 &&
+    position.x < W + 0.5 &&
+    position.z > -W - 0.5 &&
+    position.z < W + 0.5
+  )
 }
 
 function isInsideImpossibleHouseExterior(position: { x: number; z: number }) {
@@ -305,15 +356,15 @@ const PLAYER_R = 0.3
 const COLLIDERS: AABB[] = [
   // diner outer walls
   // back wall — split around kitchen opening (opening x=-2.3 to x=0.3)
-  box(-5.15, -W, 2.85, 0.15),   // back left of kitchen
-  box(4.15, -W, 3.85, 0.15),    // back right of kitchen
+  box(-5.15, -W, 2.85, 0.15), // back left of kitchen
+  box(4.15, -W, 3.85, 0.15), // back right of kitchen
   // front wall — split around door (opening x=0.5 to x=3.5)
-  box(-3.75, W, 4.25, 0.15),    // front left of door
-  box(5.75, W, 2.25, 0.15),     // front right of door
+  box(-3.75, W, 4.25, 0.15), // front left of door
+  box(5.75, W, 2.25, 0.15), // front right of door
   // left wall — split around hidden-room door opening (opening z=-1 to z=1)
-  box(-W, -4.5, 0.15, 3.5),     // left bottom (z -8 to -1)
-  box(-W, 4.5, 0.15, 3.5),      // left top (z 1 to 8)
-  box(W, 0, 0.15, W),           // right
+  box(-W, -4.5, 0.15, 3.5), // left bottom (z -8 to -1)
+  box(-W, 4.5, 0.15, 3.5), // left top (z 1 to 8)
+  box(W, 0, 0.15, W), // right
 
   // counter main body
   box(-1, -3.5, 5, 0.6),
@@ -339,9 +390,9 @@ const COLLIDERS: AABB[] = [
   box(-6, -W + 0.5, 0.5, 0.3),
 
   // === STAIRWELL (behind kitchen, z < -W) ===
-  box(-2.5, -19.75, 0.15, 11.75),   // left wall
-  box(0.5, -19.75, 0.15, 11.75),    // right wall
-  box(-1, -31.5, 1.6, 0.15),        // back wall at bottom
+  box(-2.5, -19.75, 0.15, 11.75), // left wall
+  box(0.5, -19.75, 0.15, 11.75), // right wall
+  box(-1, -31.5, 1.6, 0.15), // back wall at bottom
 
   // === SHED — exterior entrance + large interior walls ===
   // Left wall / entrance (x=13, with door gap)
@@ -351,36 +402,115 @@ const COLLIDERS: AABB[] = [
   box(13.75, -2, 0.75, 0.15),
   box(16.25, -2, 0.75, 0.15),
   // Large interior boundaries (3x bigger: extends to x=25, z=-10 to z=2)
-  box(25, -4, 0.15, 6),           // far wall (was x=17)
-  box(19, -10, 6, 0.15),          // back wall (was z=-6)
-  box(19, 2, 6, 0.15),            // front-far wall (was z=-2, extends to z=2)
+  box(25, -4, 0.15, 6), // far wall (was x=17)
+  box(19, -10, 6, 0.15), // back wall (was z=-6)
+  box(19, 2, 6, 0.15), // front-far wall (was z=-2, extends to z=2)
 
   // === IMPOSSIBLE HOUSE — tiny exterior shell behind spawn ===
-  box(IMPOSSIBLE_HOUSE_X - 2.05, IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D, 1.15, 0.15), // front left of door
-  box(IMPOSSIBLE_HOUSE_X + 2.05, IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D, 1.15, 0.15), // front right of door
-  box(IMPOSSIBLE_HOUSE_X - IMPOSSIBLE_HOUSE_HALF_W, IMPOSSIBLE_HOUSE_Z, 0.15, IMPOSSIBLE_HOUSE_HALF_D),
-  box(IMPOSSIBLE_HOUSE_X + IMPOSSIBLE_HOUSE_HALF_W, IMPOSSIBLE_HOUSE_Z, 0.15, IMPOSSIBLE_HOUSE_HALF_D),
-  box(IMPOSSIBLE_HOUSE_X, IMPOSSIBLE_HOUSE_Z + IMPOSSIBLE_HOUSE_HALF_D, IMPOSSIBLE_HOUSE_HALF_W, 0.15),
+  box(
+    IMPOSSIBLE_HOUSE_X - 2.05,
+    IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D,
+    1.15,
+    0.15,
+  ), // front left of door
+  box(
+    IMPOSSIBLE_HOUSE_X + 2.05,
+    IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D,
+    1.15,
+    0.15,
+  ), // front right of door
+  box(
+    IMPOSSIBLE_HOUSE_X - IMPOSSIBLE_HOUSE_HALF_W,
+    IMPOSSIBLE_HOUSE_Z,
+    0.15,
+    IMPOSSIBLE_HOUSE_HALF_D,
+  ),
+  box(
+    IMPOSSIBLE_HOUSE_X + IMPOSSIBLE_HOUSE_HALF_W,
+    IMPOSSIBLE_HOUSE_Z,
+    0.15,
+    IMPOSSIBLE_HOUSE_HALF_D,
+  ),
+  box(
+    IMPOSSIBLE_HOUSE_X,
+    IMPOSSIBLE_HOUSE_Z + IMPOSSIBLE_HOUSE_HALF_D,
+    IMPOSSIBLE_HOUSE_HALF_W,
+    0.15,
+  ),
 
   // === IMPOSSIBLE HOUSE — remote interior ===
-  box(IMPOSSIBLE_HOUSE_REMOTE_X - 8.4, IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D, 3.6, 0.15), // front left
-  box(IMPOSSIBLE_HOUSE_REMOTE_X + 8.4, IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D, 3.6, 0.15), // front right
-  box(IMPOSSIBLE_HOUSE_REMOTE_X - IMPOSSIBLE_HOUSE_REMOTE_HALF_W, IMPOSSIBLE_HOUSE_REMOTE_Z, 0.15, IMPOSSIBLE_HOUSE_REMOTE_HALF_D),
-  box(IMPOSSIBLE_HOUSE_REMOTE_X + IMPOSSIBLE_HOUSE_REMOTE_HALF_W, IMPOSSIBLE_HOUSE_REMOTE_Z, 0.15, IMPOSSIBLE_HOUSE_REMOTE_HALF_D),
-  box(IMPOSSIBLE_HOUSE_REMOTE_X, IMPOSSIBLE_HOUSE_REMOTE_Z + IMPOSSIBLE_HOUSE_REMOTE_HALF_D, IMPOSSIBLE_HOUSE_REMOTE_HALF_W, 0.15),
+  box(
+    IMPOSSIBLE_HOUSE_REMOTE_X - 8.4,
+    IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D,
+    3.6,
+    0.15,
+  ), // front left
+  box(
+    IMPOSSIBLE_HOUSE_REMOTE_X + 8.4,
+    IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D,
+    3.6,
+    0.15,
+  ), // front right
+  box(
+    IMPOSSIBLE_HOUSE_REMOTE_X - IMPOSSIBLE_HOUSE_REMOTE_HALF_W,
+    IMPOSSIBLE_HOUSE_REMOTE_Z,
+    0.15,
+    IMPOSSIBLE_HOUSE_REMOTE_HALF_D,
+  ),
+  box(
+    IMPOSSIBLE_HOUSE_REMOTE_X + IMPOSSIBLE_HOUSE_REMOTE_HALF_W,
+    IMPOSSIBLE_HOUSE_REMOTE_Z,
+    0.15,
+    IMPOSSIBLE_HOUSE_REMOTE_HALF_D,
+  ),
+  box(
+    IMPOSSIBLE_HOUSE_REMOTE_X,
+    IMPOSSIBLE_HOUSE_REMOTE_Z + IMPOSSIBLE_HOUSE_REMOTE_HALF_D,
+    IMPOSSIBLE_HOUSE_REMOTE_HALF_W,
+    0.15,
+  ),
 
   // === HIDDEN ROOM (bigger inside than outside) ===
-  box(HIDDEN_ROOM_CENTER_X - HIDDEN_ROOM_HALF_W, HIDDEN_ROOM_CENTER_Z, 0.15, HIDDEN_ROOM_HALF_D),
-  box(HIDDEN_ROOM_CENTER_X, HIDDEN_ROOM_CENTER_Z - HIDDEN_ROOM_HALF_D, HIDDEN_ROOM_HALF_W, 0.15),
-  box(HIDDEN_ROOM_CENTER_X, HIDDEN_ROOM_CENTER_Z + HIDDEN_ROOM_HALF_D, HIDDEN_ROOM_HALF_W, 0.15),
-  box(HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W, HIDDEN_ROOM_CENTER_Z - HIDDEN_ROOM_SIDE_SEGMENT_OFFSET_Z, 0.15, HIDDEN_ROOM_SIDE_SEGMENT_D),
-  box(HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W, HIDDEN_ROOM_CENTER_Z + HIDDEN_ROOM_SIDE_SEGMENT_OFFSET_Z, 0.15, HIDDEN_ROOM_SIDE_SEGMENT_D),
+  box(
+    HIDDEN_ROOM_CENTER_X - HIDDEN_ROOM_HALF_W,
+    HIDDEN_ROOM_CENTER_Z,
+    0.15,
+    HIDDEN_ROOM_HALF_D,
+  ),
+  box(
+    HIDDEN_ROOM_CENTER_X,
+    HIDDEN_ROOM_CENTER_Z - HIDDEN_ROOM_HALF_D,
+    HIDDEN_ROOM_HALF_W,
+    0.15,
+  ),
+  box(
+    HIDDEN_ROOM_CENTER_X,
+    HIDDEN_ROOM_CENTER_Z + HIDDEN_ROOM_HALF_D,
+    HIDDEN_ROOM_HALF_W,
+    0.15,
+  ),
+  box(
+    HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W,
+    HIDDEN_ROOM_CENTER_Z - HIDDEN_ROOM_SIDE_SEGMENT_OFFSET_Z,
+    0.15,
+    HIDDEN_ROOM_SIDE_SEGMENT_D,
+  ),
+  box(
+    HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W,
+    HIDDEN_ROOM_CENTER_Z + HIDDEN_ROOM_SIDE_SEGMENT_OFFSET_Z,
+    0.15,
+    HIDDEN_ROOM_SIDE_SEGMENT_D,
+  ),
 ]
 
 function collides(x: number, z: number): boolean {
   for (const c of COLLIDERS) {
-    if (x + PLAYER_R > c.minX && x - PLAYER_R < c.maxX &&
-        z + PLAYER_R > c.minZ && z - PLAYER_R < c.maxZ) {
+    if (
+      x + PLAYER_R > c.minX &&
+      x - PLAYER_R < c.maxX &&
+      z + PLAYER_R > c.minZ &&
+      z - PLAYER_R < c.maxZ
+    ) {
       return true
     }
   }
@@ -400,7 +530,14 @@ function getGroundHeight(x: number, z: number, y?: number): number {
     return ((1 - z) / 8) * 5.1
   }
   // Second floor
-  if (y !== undefined && y > 3.5 && x > -W + 0.3 && x < W - 0.3 && z > -W + 0.3 && z < W - 0.3) {
+  if (
+    y !== undefined &&
+    y > 3.5 &&
+    x > -W + 0.3 &&
+    x < W - 0.3 &&
+    z > -W + 0.3 &&
+    z < W - 0.3
+  ) {
     return 5.1
   }
   return 0
@@ -420,47 +557,92 @@ const TRIGGERS: Trigger[] = [
   { zone: box(-1, -31.3, 1.2, 0.5), target: new THREE.Vector3(-1, 1.6, -9) },
   // impossible house front door → much larger remote interior
   {
-    zone: box(IMPOSSIBLE_HOUSE_X, IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D + 0.45, 0.8, 0.35),
-    target: new THREE.Vector3(IMPOSSIBLE_HOUSE_REMOTE_X, 1.6, IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D + 2.2),
+    zone: box(
+      IMPOSSIBLE_HOUSE_X,
+      IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D + 0.45,
+      0.8,
+      0.35,
+    ),
+    target: new THREE.Vector3(
+      IMPOSSIBLE_HOUSE_REMOTE_X,
+      1.6,
+      IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D + 2.2,
+    ),
     rotY: Math.PI,
   },
   // remote interior exit → back outside the small house
   {
-    zone: box(IMPOSSIBLE_HOUSE_REMOTE_X, IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D + 0.45, 0.8, 0.35),
-    target: new THREE.Vector3(IMPOSSIBLE_HOUSE_X, 1.6, IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D - 1.4),
+    zone: box(
+      IMPOSSIBLE_HOUSE_REMOTE_X,
+      IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D + 0.45,
+      0.8,
+      0.35,
+    ),
+    target: new THREE.Vector3(
+      IMPOSSIBLE_HOUSE_X,
+      1.6,
+      IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D - 1.4,
+    ),
     rotY: 0,
   },
   // side door in diner → larger hidden room
   {
     zone: box(-W - 0.25, 0, 0.35, 0.8),
-    target: new THREE.Vector3(HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W - 3.5, 1.6, HIDDEN_ROOM_CENTER_Z + 6),
+    target: new THREE.Vector3(
+      HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W - 3.5,
+      1.6,
+      HIDDEN_ROOM_CENTER_Z + 6,
+    ),
     rotY: 2.35,
   },
   // hidden room door → back into diner
   {
-    zone: box(HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W - 0.25, HIDDEN_ROOM_CENTER_Z, 0.35, 0.8),
+    zone: box(
+      HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W - 0.25,
+      HIDDEN_ROOM_CENTER_Z,
+      0.35,
+      0.8,
+    ),
     target: new THREE.Vector3(-W + 1.25, 1.6, 0),
     rotY: -Math.PI / 2,
   },
 ]
 
 /* ── Checkered floor ────────────────────────────────── */
-function TileFloor({ cx, cz, hw, hd, dark1, light1 }: {
-  cx: number; cz: number; hw: number; hd: number
-  dark1?: string; light1?: string
+function TileFloor({
+  cx,
+  cz,
+  hw,
+  hd,
+  dark1,
+  light1,
+}: {
+  cx: number
+  cz: number
+  hw: number
+  hd: number
+  dark1?: string
+  light1?: string
 }) {
   void dark1
   void light1
   return (
     <mesh position={[cx, 0.03, cz]} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[hw * 2, hd * 2]} />
-      <meshStandardMaterial map={DINER_FLOOR_TEXTURE} flatShading roughness={0.95} />
+      <meshStandardMaterial
+        map={DINER_FLOOR_TEXTURE}
+        flatShading
+        roughness={0.95}
+      />
     </mesh>
   )
 }
 
 function OutdoorGround() {
-  const groundMap = useLoader(THREE.TextureLoader, '/textures/inspection_ground_asphalt_03_diff_2k.jpg')
+  const groundMap = useLoader(
+    THREE.TextureLoader,
+    '/textures/inspection_ground_asphalt_03_diff_2k.jpg',
+  )
 
   useEffect(() => {
     setupPs1Texture(groundMap, 14, 14)
@@ -469,7 +651,12 @@ function OutdoorGround() {
   return (
     <mesh position={[0, -0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[160, 160]} />
-      <meshStandardMaterial map={groundMap} color="#8f8f8f" flatShading roughness={1} />
+      <meshStandardMaterial
+        map={groundMap}
+        color="#8f8f8f"
+        flatShading
+        roughness={1}
+      />
     </mesh>
   )
 }
@@ -484,7 +671,11 @@ function SkyDome() {
   return (
     <mesh>
       <sphereGeometry args={[120, 20, 14]} />
-      <meshBasicMaterial map={skyMap} side={THREE.BackSide} depthWrite={false} />
+      <meshBasicMaterial
+        map={skyMap}
+        side={THREE.BackSide}
+        depthWrite={false}
+      />
     </mesh>
   )
 }
@@ -515,8 +706,14 @@ function OneWayStairOccluder() {
 function ImpossibleHouseDoorPreview() {
   const groupRef = useRef<THREE.Group>(null)
   const { camera } = useThree()
-  const wallMap = useLoader(THREE.TextureLoader, '/textures/diner_candidates/beige_wall_002_diff_2k.jpg')
-  const floorMap = useLoader(THREE.TextureLoader, '/textures/diner_candidates/portal_pine_floor.JPG')
+  const wallMap = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/beige_wall_002_diff_2k.jpg',
+  )
+  const floorMap = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/portal_pine_floor.JPG',
+  )
 
   useEffect(() => {
     setupPs1Texture(wallMap, 6, 3)
@@ -529,14 +726,23 @@ function ImpossibleHouseDoorPreview() {
     const inFront = p.z < IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D + 0.8
     const centered = Math.abs(p.x - IMPOSSIBLE_HOUSE_X) < 8
     const closeEnough = p.z > IMPOSSIBLE_HOUSE_Z - 22
-    groupRef.current.visible = !isInsideImpossibleHouseExterior(p) && inFront && centered && closeEnough
+    groupRef.current.visible =
+      !isInsideImpossibleHouseExterior(p) && inFront && centered && closeEnough
   })
 
   return (
     <group ref={groupRef}>
-      <mesh position={[IMPOSSIBLE_HOUSE_X, 0.03, IMPOSSIBLE_HOUSE_Z + 4]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh
+        position={[IMPOSSIBLE_HOUSE_X, 0.03, IMPOSSIBLE_HOUSE_Z + 4]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
         <planeGeometry args={[11, 16]} />
-        <meshStandardMaterial map={floorMap} color="#b39e85" flatShading roughness={0.95} />
+        <meshStandardMaterial
+          map={floorMap}
+          color="#b39e85"
+          flatShading
+          roughness={0.95}
+        />
       </mesh>
       <mesh position={[IMPOSSIBLE_HOUSE_X, 4.8, IMPOSSIBLE_HOUSE_Z + 4]}>
         <boxGeometry args={[11, 0.2, 16]} />
@@ -544,28 +750,65 @@ function ImpossibleHouseDoorPreview() {
       </mesh>
       <mesh position={[IMPOSSIBLE_HOUSE_X - 5.5, 2.4, IMPOSSIBLE_HOUSE_Z + 4]}>
         <boxGeometry args={[0.2, 4.8, 16]} />
-        <meshStandardMaterial map={wallMap} color="#eadfcd" flatShading roughness={0.92} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#eadfcd"
+          flatShading
+          roughness={0.92}
+        />
       </mesh>
       <mesh position={[IMPOSSIBLE_HOUSE_X + 5.5, 2.4, IMPOSSIBLE_HOUSE_Z + 4]}>
         <boxGeometry args={[0.2, 4.8, 16]} />
-        <meshStandardMaterial map={wallMap} color="#eadfcd" flatShading roughness={0.92} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#eadfcd"
+          flatShading
+          roughness={0.92}
+        />
       </mesh>
       <mesh position={[IMPOSSIBLE_HOUSE_X, 2.4, IMPOSSIBLE_HOUSE_Z + 12]}>
         <boxGeometry args={[11, 4.8, 0.2]} />
-        <meshStandardMaterial map={wallMap} color="#eadfcd" flatShading roughness={0.92} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#eadfcd"
+          flatShading
+          roughness={0.92}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_X - 2.8, 2.4, IMPOSSIBLE_HOUSE_Z + 1.8]}>
+      <mesh
+        position={[IMPOSSIBLE_HOUSE_X - 2.8, 2.4, IMPOSSIBLE_HOUSE_Z + 1.8]}
+      >
         <boxGeometry args={[1.4, 4.8, 7]} />
-        <meshStandardMaterial map={wallMap} color="#eadfcd" flatShading roughness={0.92} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#eadfcd"
+          flatShading
+          roughness={0.92}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_X + 2.8, 2.4, IMPOSSIBLE_HOUSE_Z + 1.8]}>
+      <mesh
+        position={[IMPOSSIBLE_HOUSE_X + 2.8, 2.4, IMPOSSIBLE_HOUSE_Z + 1.8]}
+      >
         <boxGeometry args={[1.4, 4.8, 7]} />
-        <meshStandardMaterial map={wallMap} color="#eadfcd" flatShading roughness={0.92} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#eadfcd"
+          flatShading
+          roughness={0.92}
+        />
       </mesh>
       {[-3.2, 0, 3.2].map((x) => (
-        <mesh key={x} position={[IMPOSSIBLE_HOUSE_X + x, 4.1, IMPOSSIBLE_HOUSE_Z + 5]}>
+        <mesh
+          key={x}
+          position={[IMPOSSIBLE_HOUSE_X + x, 4.1, IMPOSSIBLE_HOUSE_Z + 5]}
+        >
           <boxGeometry args={[1.8, 0.08, 0.35]} />
-          <meshStandardMaterial color="#efe2ad" emissive="#efe2ad" emissiveIntensity={1.1} flatShading />
+          <meshStandardMaterial
+            color="#efe2ad"
+            emissive="#efe2ad"
+            emissiveIntensity={1.1}
+            flatShading
+          />
         </mesh>
       ))}
     </group>
@@ -573,9 +816,18 @@ function ImpossibleHouseDoorPreview() {
 }
 
 function ImpossibleHouseExterior() {
-  const brickMap = useLoader(THREE.TextureLoader, '/textures/diner_candidates/portal_brick.JPG')
-  const roofMap = useLoader(THREE.TextureLoader, '/textures/diner_candidates/portal_plank.png')
-  const plantMap = useLoader(THREE.TextureLoader, '/textures/diner_candidates/portal_plant_a.png')
+  const brickMap = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/portal_brick.JPG',
+  )
+  const roofMap = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/portal_plank.png',
+  )
+  const plantMap = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/portal_plant_a.png',
+  )
 
   useEffect(() => {
     setupPs1Texture(brickMap, 2, 2)
@@ -585,59 +837,195 @@ function ImpossibleHouseExterior() {
 
   return (
     <group>
-      <mesh position={[IMPOSSIBLE_HOUSE_X, 0.02, IMPOSSIBLE_HOUSE_Z]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[IMPOSSIBLE_HOUSE_HALF_W * 2 + 0.6, IMPOSSIBLE_HOUSE_HALF_D * 2 + 0.6]} />
+      <mesh
+        position={[IMPOSSIBLE_HOUSE_X, 0.02, IMPOSSIBLE_HOUSE_Z]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
+        <planeGeometry
+          args={[
+            IMPOSSIBLE_HOUSE_HALF_W * 2 + 0.6,
+            IMPOSSIBLE_HOUSE_HALF_D * 2 + 0.6,
+          ]}
+        />
         <meshStandardMaterial color="#6f6452" flatShading roughness={1} />
       </mesh>
 
-      <mesh position={[IMPOSSIBLE_HOUSE_X - 2.05, IMPOSSIBLE_HOUSE_H / 2, IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D]}>
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_X - 2.05,
+          IMPOSSIBLE_HOUSE_H / 2,
+          IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D,
+        ]}
+      >
         <boxGeometry args={[2.3, IMPOSSIBLE_HOUSE_H, 0.2]} />
-        <meshStandardMaterial map={brickMap} color="#c3b59e" flatShading roughness={0.95} />
+        <meshStandardMaterial
+          map={brickMap}
+          color="#c3b59e"
+          flatShading
+          roughness={0.95}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_X + 2.05, IMPOSSIBLE_HOUSE_H / 2, IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D]}>
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_X + 2.05,
+          IMPOSSIBLE_HOUSE_H / 2,
+          IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D,
+        ]}
+      >
         <boxGeometry args={[2.3, IMPOSSIBLE_HOUSE_H, 0.2]} />
-        <meshStandardMaterial map={brickMap} color="#c3b59e" flatShading roughness={0.95} />
+        <meshStandardMaterial
+          map={brickMap}
+          color="#c3b59e"
+          flatShading
+          roughness={0.95}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_X, IMPOSSIBLE_HOUSE_H - 0.55, IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D]}>
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_X,
+          IMPOSSIBLE_HOUSE_H - 0.55,
+          IMPOSSIBLE_HOUSE_Z - IMPOSSIBLE_HOUSE_HALF_D,
+        ]}
+      >
         <boxGeometry args={[1.8, 1.1, 0.2]} />
-        <meshStandardMaterial map={brickMap} color="#c3b59e" flatShading roughness={0.95} />
+        <meshStandardMaterial
+          map={brickMap}
+          color="#c3b59e"
+          flatShading
+          roughness={0.95}
+        />
       </mesh>
 
-      <mesh position={[IMPOSSIBLE_HOUSE_X - IMPOSSIBLE_HOUSE_HALF_W, IMPOSSIBLE_HOUSE_H / 2, IMPOSSIBLE_HOUSE_Z]}>
-        <boxGeometry args={[0.2, IMPOSSIBLE_HOUSE_H, IMPOSSIBLE_HOUSE_HALF_D * 2]} />
-        <meshStandardMaterial map={brickMap} color="#c3b59e" flatShading roughness={0.95} />
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_X - IMPOSSIBLE_HOUSE_HALF_W,
+          IMPOSSIBLE_HOUSE_H / 2,
+          IMPOSSIBLE_HOUSE_Z,
+        ]}
+      >
+        <boxGeometry
+          args={[0.2, IMPOSSIBLE_HOUSE_H, IMPOSSIBLE_HOUSE_HALF_D * 2]}
+        />
+        <meshStandardMaterial
+          map={brickMap}
+          color="#c3b59e"
+          flatShading
+          roughness={0.95}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_X + IMPOSSIBLE_HOUSE_HALF_W, IMPOSSIBLE_HOUSE_H / 2, IMPOSSIBLE_HOUSE_Z]}>
-        <boxGeometry args={[0.2, IMPOSSIBLE_HOUSE_H, IMPOSSIBLE_HOUSE_HALF_D * 2]} />
-        <meshStandardMaterial map={brickMap} color="#c3b59e" flatShading roughness={0.95} />
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_X + IMPOSSIBLE_HOUSE_HALF_W,
+          IMPOSSIBLE_HOUSE_H / 2,
+          IMPOSSIBLE_HOUSE_Z,
+        ]}
+      >
+        <boxGeometry
+          args={[0.2, IMPOSSIBLE_HOUSE_H, IMPOSSIBLE_HOUSE_HALF_D * 2]}
+        />
+        <meshStandardMaterial
+          map={brickMap}
+          color="#c3b59e"
+          flatShading
+          roughness={0.95}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_X, IMPOSSIBLE_HOUSE_H / 2, IMPOSSIBLE_HOUSE_Z + IMPOSSIBLE_HOUSE_HALF_D]}>
-        <boxGeometry args={[IMPOSSIBLE_HOUSE_HALF_W * 2, IMPOSSIBLE_HOUSE_H, 0.2]} />
-        <meshStandardMaterial map={brickMap} color="#c3b59e" flatShading roughness={0.95} />
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_X,
+          IMPOSSIBLE_HOUSE_H / 2,
+          IMPOSSIBLE_HOUSE_Z + IMPOSSIBLE_HOUSE_HALF_D,
+        ]}
+      >
+        <boxGeometry
+          args={[IMPOSSIBLE_HOUSE_HALF_W * 2, IMPOSSIBLE_HOUSE_H, 0.2]}
+        />
+        <meshStandardMaterial
+          map={brickMap}
+          color="#c3b59e"
+          flatShading
+          roughness={0.95}
+        />
       </mesh>
 
-      <mesh position={[IMPOSSIBLE_HOUSE_X, IMPOSSIBLE_HOUSE_H + 0.75, IMPOSSIBLE_HOUSE_Z]} rotation={[0, 0, -0.32]}>
-        <boxGeometry args={[IMPOSSIBLE_HOUSE_HALF_W * 2 + 0.8, 0.18, IMPOSSIBLE_HOUSE_HALF_D * 2 + 0.8]} />
-        <meshStandardMaterial map={roofMap} color="#584438" flatShading roughness={0.95} />
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_X,
+          IMPOSSIBLE_HOUSE_H + 0.75,
+          IMPOSSIBLE_HOUSE_Z,
+        ]}
+        rotation={[0, 0, -0.32]}
+      >
+        <boxGeometry
+          args={[
+            IMPOSSIBLE_HOUSE_HALF_W * 2 + 0.8,
+            0.18,
+            IMPOSSIBLE_HOUSE_HALF_D * 2 + 0.8,
+          ]}
+        />
+        <meshStandardMaterial
+          map={roofMap}
+          color="#584438"
+          flatShading
+          roughness={0.95}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_X, IMPOSSIBLE_HOUSE_H + 0.75, IMPOSSIBLE_HOUSE_Z]} rotation={[0, 0, 0.32]}>
-        <boxGeometry args={[IMPOSSIBLE_HOUSE_HALF_W * 2 + 0.8, 0.18, IMPOSSIBLE_HOUSE_HALF_D * 2 + 0.8]} />
-        <meshStandardMaterial map={roofMap} color="#584438" flatShading roughness={0.95} />
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_X,
+          IMPOSSIBLE_HOUSE_H + 0.75,
+          IMPOSSIBLE_HOUSE_Z,
+        ]}
+        rotation={[0, 0, 0.32]}
+      >
+        <boxGeometry
+          args={[
+            IMPOSSIBLE_HOUSE_HALF_W * 2 + 0.8,
+            0.18,
+            IMPOSSIBLE_HOUSE_HALF_D * 2 + 0.8,
+          ]}
+        />
+        <meshStandardMaterial
+          map={roofMap}
+          color="#584438"
+          flatShading
+          roughness={0.95}
+        />
       </mesh>
 
-      <mesh position={[IMPOSSIBLE_HOUSE_X - 3.9, 1.1, IMPOSSIBLE_HOUSE_Z + 1.6]}>
+      <mesh
+        position={[IMPOSSIBLE_HOUSE_X - 3.9, 1.1, IMPOSSIBLE_HOUSE_Z + 1.6]}
+      >
         <planeGeometry args={[1.8, 2.2]} />
-        <meshStandardMaterial map={plantMap} transparent alphaTest={0.2} side={THREE.DoubleSide} flatShading />
+        <meshStandardMaterial
+          map={plantMap}
+          transparent
+          alphaTest={0.2}
+          side={THREE.DoubleSide}
+          flatShading
+        />
       </mesh>
     </group>
   )
 }
 
 function ImpossibleHouseInterior() {
-  const wallMap = useLoader(THREE.TextureLoader, '/textures/diner_candidates/beige_wall_002_diff_2k.jpg')
-  const floorMap = useLoader(THREE.TextureLoader, '/textures/diner_candidates/portal_pine_floor.JPG')
-  const plantMapA = useLoader(THREE.TextureLoader, '/textures/diner_candidates/portal_plant_a.png')
-  const plantMapB = useLoader(THREE.TextureLoader, '/textures/diner_candidates/portal_plant_b.png')
+  const wallMap = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/beige_wall_002_diff_2k.jpg',
+  )
+  const floorMap = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/portal_pine_floor.JPG',
+  )
+  const plantMapA = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/portal_plant_a.png',
+  )
+  const plantMapB = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/portal_plant_b.png',
+  )
 
   useEffect(() => {
     setupPs1Texture(wallMap, 8, 4)
@@ -653,54 +1041,167 @@ function ImpossibleHouseInterior() {
 
   return (
     <group>
-      <mesh position={[IMPOSSIBLE_HOUSE_REMOTE_X, 0.03, IMPOSSIBLE_HOUSE_REMOTE_Z]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[IMPOSSIBLE_HOUSE_REMOTE_HALF_W * 2, IMPOSSIBLE_HOUSE_REMOTE_HALF_D * 2]} />
-        <meshStandardMaterial map={floorMap} color="#baa588" flatShading roughness={0.95} />
+      <mesh
+        position={[IMPOSSIBLE_HOUSE_REMOTE_X, 0.03, IMPOSSIBLE_HOUSE_REMOTE_Z]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
+        <planeGeometry
+          args={[
+            IMPOSSIBLE_HOUSE_REMOTE_HALF_W * 2,
+            IMPOSSIBLE_HOUSE_REMOTE_HALF_D * 2,
+          ]}
+        />
+        <meshStandardMaterial
+          map={floorMap}
+          color="#baa588"
+          flatShading
+          roughness={0.95}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_REMOTE_X, 5.2, IMPOSSIBLE_HOUSE_REMOTE_Z]}>
-        <boxGeometry args={[IMPOSSIBLE_HOUSE_REMOTE_HALF_W * 2, 0.2, IMPOSSIBLE_HOUSE_REMOTE_HALF_D * 2]} />
+      <mesh
+        position={[IMPOSSIBLE_HOUSE_REMOTE_X, 5.2, IMPOSSIBLE_HOUSE_REMOTE_Z]}
+      >
+        <boxGeometry
+          args={[
+            IMPOSSIBLE_HOUSE_REMOTE_HALF_W * 2,
+            0.2,
+            IMPOSSIBLE_HOUSE_REMOTE_HALF_D * 2,
+          ]}
+        />
         <meshStandardMaterial color="#ddd7ca" flatShading roughness={0.9} />
       </mesh>
 
-      <mesh position={[IMPOSSIBLE_HOUSE_REMOTE_X - IMPOSSIBLE_HOUSE_REMOTE_HALF_W, 2.6, IMPOSSIBLE_HOUSE_REMOTE_Z]}>
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_REMOTE_X - IMPOSSIBLE_HOUSE_REMOTE_HALF_W,
+          2.6,
+          IMPOSSIBLE_HOUSE_REMOTE_Z,
+        ]}
+      >
         <boxGeometry args={[0.2, 5.2, IMPOSSIBLE_HOUSE_REMOTE_HALF_D * 2]} />
-        <meshStandardMaterial map={wallMap} color="#eadfcd" flatShading roughness={0.92} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#eadfcd"
+          flatShading
+          roughness={0.92}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_REMOTE_X + IMPOSSIBLE_HOUSE_REMOTE_HALF_W, 2.6, IMPOSSIBLE_HOUSE_REMOTE_Z]}>
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_REMOTE_X + IMPOSSIBLE_HOUSE_REMOTE_HALF_W,
+          2.6,
+          IMPOSSIBLE_HOUSE_REMOTE_Z,
+        ]}
+      >
         <boxGeometry args={[0.2, 5.2, IMPOSSIBLE_HOUSE_REMOTE_HALF_D * 2]} />
-        <meshStandardMaterial map={wallMap} color="#eadfcd" flatShading roughness={0.92} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#eadfcd"
+          flatShading
+          roughness={0.92}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_REMOTE_X, 2.6, IMPOSSIBLE_HOUSE_REMOTE_Z + IMPOSSIBLE_HOUSE_REMOTE_HALF_D]}>
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_REMOTE_X,
+          2.6,
+          IMPOSSIBLE_HOUSE_REMOTE_Z + IMPOSSIBLE_HOUSE_REMOTE_HALF_D,
+        ]}
+      >
         <boxGeometry args={[IMPOSSIBLE_HOUSE_REMOTE_HALF_W * 2, 5.2, 0.2]} />
-        <meshStandardMaterial map={wallMap} color="#eadfcd" flatShading roughness={0.92} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#eadfcd"
+          flatShading
+          roughness={0.92}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_REMOTE_X - 8.4, 2.6, IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D]}>
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_REMOTE_X - 8.4,
+          2.6,
+          IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D,
+        ]}
+      >
         <boxGeometry args={[7.2, 5.2, 0.2]} />
-        <meshStandardMaterial map={wallMap} color="#eadfcd" flatShading roughness={0.92} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#eadfcd"
+          flatShading
+          roughness={0.92}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_REMOTE_X + 8.4, 2.6, IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D]}>
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_REMOTE_X + 8.4,
+          2.6,
+          IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D,
+        ]}
+      >
         <boxGeometry args={[7.2, 5.2, 0.2]} />
-        <meshStandardMaterial map={wallMap} color="#eadfcd" flatShading roughness={0.92} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#eadfcd"
+          flatShading
+          roughness={0.92}
+        />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_REMOTE_X, 4.1, IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D]}>
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_REMOTE_X,
+          4.1,
+          IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D,
+        ]}
+      >
         <boxGeometry args={[9.6, 2.2, 0.2]} />
-        <meshStandardMaterial map={wallMap} color="#eadfcd" flatShading roughness={0.92} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#eadfcd"
+          flatShading
+          roughness={0.92}
+        />
       </mesh>
 
-      <mesh position={[IMPOSSIBLE_HOUSE_REMOTE_X, 0.08, IMPOSSIBLE_HOUSE_REMOTE_Z + 3]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_REMOTE_X,
+          0.08,
+          IMPOSSIBLE_HOUSE_REMOTE_Z + 3,
+        ]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
         <planeGeometry args={[14, 12]} />
         <meshStandardMaterial color="#7f3c42" flatShading roughness={1} />
       </mesh>
 
       {[-7.5, -2.5, 2.5, 7.5].map((x) => (
-        <mesh key={x} position={[IMPOSSIBLE_HOUSE_REMOTE_X + x, 4.25, IMPOSSIBLE_HOUSE_REMOTE_Z + 1]}>
+        <mesh
+          key={x}
+          position={[
+            IMPOSSIBLE_HOUSE_REMOTE_X + x,
+            4.25,
+            IMPOSSIBLE_HOUSE_REMOTE_Z + 1,
+          ]}
+        >
           <boxGeometry args={[1.8, 0.08, 0.35]} />
-          <meshStandardMaterial color="#efe2ad" emissive="#efe2ad" emissiveIntensity={1.2} flatShading />
+          <meshStandardMaterial
+            color="#efe2ad"
+            emissive="#efe2ad"
+            emissiveIntensity={1.2}
+            flatShading
+          />
         </mesh>
       ))}
 
       {[-8, 0, 8].map((x) => (
-        <group key={x} position={[IMPOSSIBLE_HOUSE_REMOTE_X + x, 0, IMPOSSIBLE_HOUSE_REMOTE_Z + 2]}>
+        <group
+          key={x}
+          position={[
+            IMPOSSIBLE_HOUSE_REMOTE_X + x,
+            0,
+            IMPOSSIBLE_HOUSE_REMOTE_Z + 2,
+          ]}
+        >
           <mesh position={[0, 2.6, 0]}>
             <boxGeometry args={[0.55, 5.2, 0.55]} />
             <meshStandardMaterial color="#c8baa5" flatShading roughness={0.9} />
@@ -709,39 +1210,92 @@ function ImpossibleHouseInterior() {
       ))}
 
       {[-6, 0, 6].map((x) => (
-        <Booth key={x} position={[IMPOSSIBLE_HOUSE_REMOTE_X + x, 0, IMPOSSIBLE_HOUSE_REMOTE_Z - 6]} />
+        <Booth
+          key={x}
+          position={[
+            IMPOSSIBLE_HOUSE_REMOTE_X + x,
+            0,
+            IMPOSSIBLE_HOUSE_REMOTE_Z - 6,
+          ]}
+        />
       ))}
       {[-6, 0, 6].map((x) => (
-        <Booth key={`lower-${x}`} position={[IMPOSSIBLE_HOUSE_REMOTE_X + x, 0, IMPOSSIBLE_HOUSE_REMOTE_Z + 8]} />
+        <Booth
+          key={`lower-${x}`}
+          position={[
+            IMPOSSIBLE_HOUSE_REMOTE_X + x,
+            0,
+            IMPOSSIBLE_HOUSE_REMOTE_Z + 8,
+          ]}
+        />
       ))}
 
-      <mesh position={[IMPOSSIBLE_HOUSE_REMOTE_X - 9, 0.55, IMPOSSIBLE_HOUSE_REMOTE_Z + 2]}>
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_REMOTE_X - 9,
+          0.55,
+          IMPOSSIBLE_HOUSE_REMOTE_Z + 2,
+        ]}
+      >
         <boxGeometry args={[4.5, 1.1, 6]} />
         <meshStandardMaterial color="#6d5a49" flatShading roughness={0.85} />
       </mesh>
-      <mesh position={[IMPOSSIBLE_HOUSE_REMOTE_X - 9, 1.15, IMPOSSIBLE_HOUSE_REMOTE_Z + 2]}>
+      <mesh
+        position={[
+          IMPOSSIBLE_HOUSE_REMOTE_X - 9,
+          1.15,
+          IMPOSSIBLE_HOUSE_REMOTE_Z + 2,
+        ]}
+      >
         <boxGeometry args={[4.7, 0.12, 6.2]} />
         <meshStandardMaterial color={FORMICA} flatShading roughness={0.45} />
       </mesh>
 
       {[
-        [IMPOSSIBLE_HOUSE_REMOTE_X - 10.2, IMPOSSIBLE_HOUSE_REMOTE_Z - 11, plantMapA],
-        [IMPOSSIBLE_HOUSE_REMOTE_X + 10.4, IMPOSSIBLE_HOUSE_REMOTE_Z - 11, plantMapB],
-        [IMPOSSIBLE_HOUSE_REMOTE_X - 10.4, IMPOSSIBLE_HOUSE_REMOTE_Z + 12, plantMapB],
+        [
+          IMPOSSIBLE_HOUSE_REMOTE_X - 10.2,
+          IMPOSSIBLE_HOUSE_REMOTE_Z - 11,
+          plantMapA,
+        ],
+        [
+          IMPOSSIBLE_HOUSE_REMOTE_X + 10.4,
+          IMPOSSIBLE_HOUSE_REMOTE_Z - 11,
+          plantMapB,
+        ],
+        [
+          IMPOSSIBLE_HOUSE_REMOTE_X - 10.4,
+          IMPOSSIBLE_HOUSE_REMOTE_Z + 12,
+          plantMapB,
+        ],
       ].map(([x, z, texture], i) => (
         <mesh key={i} position={[x as number, 1.2, z as number]}>
           <planeGeometry args={[2.2, 2.6]} />
-          <meshStandardMaterial map={texture as THREE.Texture} transparent alphaTest={0.2} side={THREE.DoubleSide} flatShading />
+          <meshStandardMaterial
+            map={texture as THREE.Texture}
+            transparent
+            alphaTest={0.2}
+            side={THREE.DoubleSide}
+            flatShading
+          />
         </mesh>
       ))}
 
-      <pointLight position={[IMPOSSIBLE_HOUSE_REMOTE_X, 4.2, IMPOSSIBLE_HOUSE_REMOTE_Z]} intensity={3.8} color="#f3e1b8" distance={28} />
+      <pointLight
+        position={[IMPOSSIBLE_HOUSE_REMOTE_X, 4.2, IMPOSSIBLE_HOUSE_REMOTE_Z]}
+        intensity={3.8}
+        color="#f3e1b8"
+        distance={28}
+      />
     </group>
   )
 }
 
 /* ── Diner structure ────────────────────────────────── */
-function DinerShell({ offset, tealColor, creamColor }: {
+function DinerShell({
+  offset,
+  tealColor,
+  creamColor,
+}: {
   offset?: [number, number, number]
   tealColor?: string
   creamColor?: string
@@ -854,8 +1408,15 @@ function Windows({ offset }: { offset?: [number, number, number] }) {
         <group key={i} position={[W - 0.15, 1.75, z]}>
           <mesh>
             <boxGeometry args={[0.05, 1.5, 1.5]} />
-            <meshStandardMaterial color="#aaddee" emissive="#446688" emissiveIntensity={0.4}
-              flatShading roughness={0.2} transparent opacity={0.7} />
+            <meshStandardMaterial
+              color="#aaddee"
+              emissive="#446688"
+              emissiveIntensity={0.4}
+              flatShading
+              roughness={0.2}
+              transparent
+              opacity={0.7}
+            />
           </mesh>
           <mesh position={[0.05, 0.8, 0]}>
             <boxGeometry args={[0.1, 0.1, 1.6]} />
@@ -880,7 +1441,8 @@ function NeonSign({ offset }: { offset?: [number, number, number] }) {
     neonRef.current.children.forEach((child) => {
       if (child instanceof THREE.Mesh) {
         const mat = child.material
-        if (mat instanceof THREE.MeshStandardMaterial) mat.emissiveIntensity = 2 * flicker
+        if (mat instanceof THREE.MeshStandardMaterial)
+          mat.emissiveIntensity = 2 * flicker
       }
     })
   })
@@ -890,13 +1452,23 @@ function NeonSign({ offset }: { offset?: [number, number, number] }) {
         {[-0.45, -0.15].map((x) => (
           <mesh key={x} position={[x, 0, 0]}>
             <boxGeometry args={[0.04, 0.25, 0.2]} />
-            <meshStandardMaterial color={NEON_PINK} emissive={NEON_PINK} emissiveIntensity={2} flatShading />
+            <meshStandardMaterial
+              color={NEON_PINK}
+              emissive={NEON_PINK}
+              emissiveIntensity={2}
+              flatShading
+            />
           </mesh>
         ))}
         {[0.15, 0.45].map((x) => (
           <mesh key={x} position={[x, 0, 0]}>
             <boxGeometry args={[0.04, 0.25, 0.2]} />
-            <meshStandardMaterial color={NEON_GREEN} emissive={NEON_GREEN} emissiveIntensity={2} flatShading />
+            <meshStandardMaterial
+              color={NEON_GREEN}
+              emissive={NEON_GREEN}
+              emissiveIntensity={2}
+              flatShading
+            />
           </mesh>
         ))}
       </group>
@@ -909,14 +1481,48 @@ function NeonSign({ offset }: { offset?: [number, number, number] }) {
 function Counter({ offset }: { offset?: [number, number, number] }) {
   return (
     <group position={offset}>
-      <mesh position={[-1, 0.5, -3.5]}><boxGeometry args={[10, 1, 1.2]} /><meshStandardMaterial color="#888070" flatShading roughness={0.7} /></mesh>
-      <mesh position={[-1, 1.05, -3.5]}><boxGeometry args={[10.3, 0.12, 1.5]} /><meshStandardMaterial color={FORMICA} flatShading roughness={0.4} /></mesh>
-      <mesh position={[-1, 1.05, -2.75]}><boxGeometry args={[10.35, 0.06, 0.06]} /><meshStandardMaterial color={CHROME} metalness={0.9} roughness={0.1} flatShading /></mesh>
-      <mesh position={[3.5, 0.5, -1]}><boxGeometry args={[1.2, 1, 5.2]} /><meshStandardMaterial color="#888070" flatShading roughness={0.7} /></mesh>
-      <mesh position={[3.5, 1.05, -1]}><boxGeometry args={[1.5, 0.12, 5.5]} /><meshStandardMaterial color={FORMICA} flatShading roughness={0.4} /></mesh>
-      <mesh position={[2.75, 1.05, -1]}><boxGeometry args={[0.06, 0.06, 5.55]} /><meshStandardMaterial color={CHROME} metalness={0.9} roughness={0.1} flatShading /></mesh>
+      <mesh position={[-1, 0.5, -3.5]}>
+        <boxGeometry args={[10, 1, 1.2]} />
+        <meshStandardMaterial color="#888070" flatShading roughness={0.7} />
+      </mesh>
+      <mesh position={[-1, 1.05, -3.5]}>
+        <boxGeometry args={[10.3, 0.12, 1.5]} />
+        <meshStandardMaterial color={FORMICA} flatShading roughness={0.4} />
+      </mesh>
+      <mesh position={[-1, 1.05, -2.75]}>
+        <boxGeometry args={[10.35, 0.06, 0.06]} />
+        <meshStandardMaterial
+          color={CHROME}
+          metalness={0.9}
+          roughness={0.1}
+          flatShading
+        />
+      </mesh>
+      <mesh position={[3.5, 0.5, -1]}>
+        <boxGeometry args={[1.2, 1, 5.2]} />
+        <meshStandardMaterial color="#888070" flatShading roughness={0.7} />
+      </mesh>
+      <mesh position={[3.5, 1.05, -1]}>
+        <boxGeometry args={[1.5, 0.12, 5.5]} />
+        <meshStandardMaterial color={FORMICA} flatShading roughness={0.4} />
+      </mesh>
+      <mesh position={[2.75, 1.05, -1]}>
+        <boxGeometry args={[0.06, 0.06, 5.55]} />
+        <meshStandardMaterial
+          color={CHROME}
+          metalness={0.9}
+          roughness={0.1}
+          flatShading
+        />
+      </mesh>
       <mesh position={[-1, 0.2, -2.85]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.03, 0.03, 10, 6]} /><meshStandardMaterial color={CHROME} metalness={0.9} roughness={0.1} flatShading />
+        <cylinderGeometry args={[0.03, 0.03, 10, 6]} />
+        <meshStandardMaterial
+          color={CHROME}
+          metalness={0.9}
+          roughness={0.1}
+          flatShading
+        />
       </mesh>
     </group>
   )
@@ -926,13 +1532,34 @@ function Counter({ offset }: { offset?: [number, number, number] }) {
 function BarStool({ position }: { position: [number, number, number] }) {
   const seatRef = useRef<THREE.Mesh>(null)
   useFrame((state) => {
-    if (seatRef.current) seatRef.current.rotation.y = state.clock.elapsedTime * 0.15 + position[0] * 2
+    if (seatRef.current)
+      seatRef.current.rotation.y =
+        state.clock.elapsedTime * 0.15 + position[0] * 2
   })
   return (
     <group position={position}>
-      <mesh position={[0, 0.45, 0]}><cylinderGeometry args={[0.04, 0.04, 0.9, 6]} /><meshStandardMaterial color={CHROME} metalness={0.9} roughness={0.1} flatShading /></mesh>
-      <mesh position={[0, 0.02, 0]}><cylinderGeometry args={[0.25, 0.28, 0.04, 8]} /><meshStandardMaterial color={CHROME} metalness={0.9} roughness={0.1} flatShading /></mesh>
-      <mesh ref={seatRef} position={[0, 0.95, 0]}><cylinderGeometry args={[0.25, 0.22, 0.12, 8]} /><meshStandardMaterial color={RED_VINYL} flatShading roughness={0.6} /></mesh>
+      <mesh position={[0, 0.45, 0]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.9, 6]} />
+        <meshStandardMaterial
+          color={CHROME}
+          metalness={0.9}
+          roughness={0.1}
+          flatShading
+        />
+      </mesh>
+      <mesh position={[0, 0.02, 0]}>
+        <cylinderGeometry args={[0.25, 0.28, 0.04, 8]} />
+        <meshStandardMaterial
+          color={CHROME}
+          metalness={0.9}
+          roughness={0.1}
+          flatShading
+        />
+      </mesh>
+      <mesh ref={seatRef} position={[0, 0.95, 0]}>
+        <cylinderGeometry args={[0.25, 0.22, 0.12, 8]} />
+        <meshStandardMaterial color={RED_VINYL} flatShading roughness={0.6} />
+      </mesh>
     </group>
   )
 }
@@ -941,12 +1568,35 @@ function BarStool({ position }: { position: [number, number, number] }) {
 function Booth({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
-      <mesh position={[0, 0.5, -0.7]}><boxGeometry args={[2.4, 1, 0.5]} /><meshStandardMaterial color={RED_VINYL} flatShading roughness={0.6} /></mesh>
-      <mesh position={[0, 1.2, -0.9]}><boxGeometry args={[2.4, 0.9, 0.15]} /><meshStandardMaterial color={RED_VINYL} flatShading roughness={0.6} /></mesh>
-      <mesh position={[0, 0.5, 0.7]}><boxGeometry args={[2.4, 1, 0.5]} /><meshStandardMaterial color={RED_VINYL} flatShading roughness={0.6} /></mesh>
-      <mesh position={[0, 1.2, 0.9]}><boxGeometry args={[2.4, 0.9, 0.15]} /><meshStandardMaterial color={RED_VINYL} flatShading roughness={0.6} /></mesh>
-      <mesh position={[0, 0.9, 0]}><boxGeometry args={[2, 0.08, 0.8]} /><meshStandardMaterial color={FORMICA} flatShading roughness={0.4} /></mesh>
-      <mesh position={[0, 0.45, 0]}><boxGeometry args={[0.1, 0.9, 0.1]} /><meshStandardMaterial color={CHROME} metalness={0.8} roughness={0.2} flatShading /></mesh>
+      <mesh position={[0, 0.5, -0.7]}>
+        <boxGeometry args={[2.4, 1, 0.5]} />
+        <meshStandardMaterial color={RED_VINYL} flatShading roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 1.2, -0.9]}>
+        <boxGeometry args={[2.4, 0.9, 0.15]} />
+        <meshStandardMaterial color={RED_VINYL} flatShading roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 0.5, 0.7]}>
+        <boxGeometry args={[2.4, 1, 0.5]} />
+        <meshStandardMaterial color={RED_VINYL} flatShading roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 1.2, 0.9]}>
+        <boxGeometry args={[2.4, 0.9, 0.15]} />
+        <meshStandardMaterial color={RED_VINYL} flatShading roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 0.9, 0]}>
+        <boxGeometry args={[2, 0.08, 0.8]} />
+        <meshStandardMaterial color={FORMICA} flatShading roughness={0.4} />
+      </mesh>
+      <mesh position={[0, 0.45, 0]}>
+        <boxGeometry args={[0.1, 0.9, 0.1]} />
+        <meshStandardMaterial
+          color={CHROME}
+          metalness={0.8}
+          roughness={0.2}
+          flatShading
+        />
+      </mesh>
     </group>
   )
 }
@@ -955,8 +1605,19 @@ function Booth({ position }: { position: [number, number, number] }) {
 function CeilingLight({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
-      <mesh><cylinderGeometry args={[0.15, 0.25, 0.1, 6]} /><meshStandardMaterial color="#ddd" flatShading /></mesh>
-      <mesh position={[0, -0.15, 0]}><cylinderGeometry args={[0.3, 0.15, 0.2, 6]} /><meshStandardMaterial color={CREAM} emissive="#ffeecc" emissiveIntensity={0.5} flatShading /></mesh>
+      <mesh>
+        <cylinderGeometry args={[0.15, 0.25, 0.1, 6]} />
+        <meshStandardMaterial color="#ddd" flatShading />
+      </mesh>
+      <mesh position={[0, -0.15, 0]}>
+        <cylinderGeometry args={[0.3, 0.15, 0.2, 6]} />
+        <meshStandardMaterial
+          color={CREAM}
+          emissive="#ffeecc"
+          emissiveIntensity={0.5}
+          flatShading
+        />
+      </mesh>
     </group>
   )
 }
@@ -966,11 +1627,41 @@ function Jukebox({ offset }: { offset?: [number, number, number] }) {
   return (
     <group position={offset}>
       <group position={[-6, 0, -W + 0.5]}>
-        <mesh position={[0, 1, 0]}><boxGeometry args={[0.8, 2, 0.5]} /><meshStandardMaterial color="#553322" flatShading roughness={0.8} /></mesh>
-        <mesh position={[0, 2.15, 0]}><boxGeometry args={[0.7, 0.4, 0.45]} /><meshStandardMaterial color="#664433" flatShading roughness={0.8} /></mesh>
-        <mesh position={[0, 1, 0.26]}><boxGeometry args={[0.85, 2.05, 0.02]} /><meshStandardMaterial color={CHROME} metalness={0.8} roughness={0.2} flatShading /></mesh>
-        <mesh position={[0, 1.5, 0.28]}><boxGeometry args={[0.5, 0.6, 0.02]} /><meshStandardMaterial color="#ffaa33" emissive="#ff8800" emissiveIntensity={1.5} flatShading /></mesh>
-        <mesh position={[0, 0.5, 0.28]}><boxGeometry args={[0.5, 0.4, 0.02]} /><meshStandardMaterial color="#ff6699" emissive="#ff3366" emissiveIntensity={1} flatShading /></mesh>
+        <mesh position={[0, 1, 0]}>
+          <boxGeometry args={[0.8, 2, 0.5]} />
+          <meshStandardMaterial color="#553322" flatShading roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 2.15, 0]}>
+          <boxGeometry args={[0.7, 0.4, 0.45]} />
+          <meshStandardMaterial color="#664433" flatShading roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 1, 0.26]}>
+          <boxGeometry args={[0.85, 2.05, 0.02]} />
+          <meshStandardMaterial
+            color={CHROME}
+            metalness={0.8}
+            roughness={0.2}
+            flatShading
+          />
+        </mesh>
+        <mesh position={[0, 1.5, 0.28]}>
+          <boxGeometry args={[0.5, 0.6, 0.02]} />
+          <meshStandardMaterial
+            color="#ffaa33"
+            emissive="#ff8800"
+            emissiveIntensity={1.5}
+            flatShading
+          />
+        </mesh>
+        <mesh position={[0, 0.5, 0.28]}>
+          <boxGeometry args={[0.5, 0.4, 0.02]} />
+          <meshStandardMaterial
+            color="#ff6699"
+            emissive="#ff3366"
+            emissiveIntensity={1}
+            flatShading
+          />
+        </mesh>
       </group>
     </group>
   )
@@ -985,7 +1676,8 @@ function InfiniteStaircase() {
   useFrame((state) => {
     if (flickerRef.current) {
       const t = state.clock.elapsedTime
-      flickerRef.current.intensity = 1.5 + Math.sin(t * 7) * Math.sin(t * 13) * 1.5
+      flickerRef.current.intensity =
+        1.5 + Math.sin(t * 7) * Math.sin(t * 13) * 1.5
     }
   })
 
@@ -1014,7 +1706,11 @@ function InfiniteStaircase() {
         return (
           <mesh key={i} position={[-1, y, z]}>
             <boxGeometry args={[2.8, stepH, stepD]} />
-            <meshStandardMaterial color={i % 2 === 0 ? '#555' : '#4a4a4a'} flatShading roughness={0.9} />
+            <meshStandardMaterial
+              color={i % 2 === 0 ? '#555' : '#4a4a4a'}
+              flatShading
+              roughness={0.9}
+            />
           </mesh>
         )
       })}
@@ -1053,7 +1749,12 @@ function InfiniteStaircase() {
       {/* === Handrail (left side) === */}
       <mesh position={[-2.2, -3, -20]} rotation={[slopeAngle, 0, 0]}>
         <boxGeometry args={[0.06, 0.06, slopeLen]} />
-        <meshStandardMaterial color="#666" metalness={0.7} roughness={0.3} flatShading />
+        <meshStandardMaterial
+          color="#666"
+          metalness={0.7}
+          roughness={0.3}
+          flatShading
+        />
       </mesh>
       {/* Handrail supports */}
       {[0, 1, 2, 3, 4].map((i) => {
@@ -1068,8 +1769,19 @@ function InfiniteStaircase() {
       })}
 
       {/* === Lighting (2 lights only) === */}
-      <pointLight ref={flickerRef} position={[-1, 3.5, -9]} intensity={3} color="#ffeeaa" distance={12} />
-      <pointLight position={[-1, -4, -22]} intensity={2} color="#aabb99" distance={15} />
+      <pointLight
+        ref={flickerRef}
+        position={[-1, 3.5, -9]}
+        intensity={3}
+        color="#ffeeaa"
+        distance={12}
+      />
+      <pointLight
+        position={[-1, -4, -22]}
+        intensity={2}
+        color="#aabb99"
+        distance={15}
+      />
 
       {/* Fluorescent tube fixtures */}
       {[-14, -20, -26].map((z) => {
@@ -1077,7 +1789,12 @@ function InfiniteStaircase() {
         return (
           <mesh key={z} position={[-1, y, z]}>
             <boxGeometry args={[1.2, 0.04, 0.08]} />
-            <meshStandardMaterial color="#ddd" emissive="#aaffaa" emissiveIntensity={1} flatShading />
+            <meshStandardMaterial
+              color="#ddd"
+              emissive="#aaffaa"
+              emissiveIntensity={1}
+              flatShading
+            />
           </mesh>
         )
       })}
@@ -1096,11 +1813,19 @@ function InfiniteStaircase() {
       {/* Scratch marks on walls */}
       <mesh position={[-2.35, -2.5, -18]} rotation={[0, Math.PI / 2, 0]}>
         <planeGeometry args={[0.3, 0.01]} />
-        <meshStandardMaterial color="#884444" flatShading side={THREE.DoubleSide} />
+        <meshStandardMaterial
+          color="#884444"
+          flatShading
+          side={THREE.DoubleSide}
+        />
       </mesh>
       <mesh position={[-2.35, -2.5, -18.15]} rotation={[0, Math.PI / 2, 0.5]}>
         <planeGeometry args={[0.25, 0.01]} />
-        <meshStandardMaterial color="#884444" flatShading side={THREE.DoubleSide} />
+        <meshStandardMaterial
+          color="#884444"
+          flatShading
+          side={THREE.DoubleSide}
+        />
       </mesh>
 
       {/* Step number markings (barely visible) */}
@@ -1110,7 +1835,11 @@ function InfiniteStaircase() {
         return (
           <mesh key={n} position={[0.35, y, z]} rotation={[0, -Math.PI / 2, 0]}>
             <planeGeometry args={[0.15, 0.15]} />
-            <meshStandardMaterial color="#555" flatShading side={THREE.DoubleSide} />
+            <meshStandardMaterial
+              color="#555"
+              flatShading
+              side={THREE.DoubleSide}
+            />
           </mesh>
         )
       })}
@@ -1119,7 +1848,11 @@ function InfiniteStaircase() {
 }
 
 /* ── First-person controller with collisions ────────── */
-function FirstPersonControls({ onZoneText }: { onZoneText: (t: string) => void }) {
+function FirstPersonControls({
+  onZoneText,
+}: {
+  onZoneText: (t: string) => void
+}) {
   const { camera, gl } = useThree()
   const keys = useRef(new Set<string>())
   const walkSpeed = 4
@@ -1156,13 +1889,13 @@ function FirstPersonControls({ onZoneText }: { onZoneText: (t: string) => void }
       if (e.key === ' ') e.preventDefault()
       // P = screenshot + log position
       if (e.key.toLowerCase() === 'p') {
-        const p = camera.position
-        const r = camera.rotation
-        const posStr = `x=${p.x.toFixed(2)}&y=${p.y.toFixed(2)}&z=${p.z.toFixed(2)}&ry=${r.y.toFixed(2)}`
-        console.log(`[POS] /inspection?${posStr}`)
-        console.log(`[POS] position: (${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}) rotY: ${r.y.toFixed(2)}`)
         // Screenshot
-        gl.render(gl.info.autoReset ? camera.parent!.parent! as unknown as THREE.Scene : new THREE.Scene(), camera)
+        gl.render(
+          gl.info.autoReset
+            ? (camera.parent!.parent! as unknown as THREE.Scene)
+            : new THREE.Scene(),
+          camera,
+        )
         const dataUrl = gl.domElement.toDataURL('image/png')
         const link = document.createElement('a')
         link.href = dataUrl
@@ -1173,7 +1906,10 @@ function FirstPersonControls({ onZoneText }: { onZoneText: (t: string) => void }
     const onUp = (e: KeyboardEvent) => keys.current.delete(e.key.toLowerCase())
     window.addEventListener('keydown', onDown)
     window.addEventListener('keyup', onUp)
-    return () => { window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp) }
+    return () => {
+      window.removeEventListener('keydown', onDown)
+      window.removeEventListener('keyup', onUp)
+    }
   }, [camera, gl])
 
   useFrame((_, delta) => {
@@ -1185,7 +1921,9 @@ function FirstPersonControls({ onZoneText }: { onZoneText: (t: string) => void }
     camera.getWorldDirection(forward)
     forward.y = 0
     forward.normalize()
-    const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize()
+    const right = new THREE.Vector3()
+      .crossVectors(forward, camera.up)
+      .normalize()
 
     if (keys.current.has('w') || keys.current.has('arrowup')) dir.add(forward)
     if (keys.current.has('s') || keys.current.has('arrowdown')) dir.sub(forward)
@@ -1203,7 +1941,10 @@ function FirstPersonControls({ onZoneText }: { onZoneText: (t: string) => void }
     }
 
     // jumping
-    if ((keys.current.has(' ') || keys.current.has('space')) && grounded.current) {
+    if (
+      (keys.current.has(' ') || keys.current.has('space')) &&
+      grounded.current
+    ) {
       velocityY.current = jumpForce
       grounded.current = false
     }
@@ -1211,7 +1952,9 @@ function FirstPersonControls({ onZoneText }: { onZoneText: (t: string) => void }
     camera.position.y += velocityY.current * delta
     const crouching = keys.current.has('control')
     const currentEye = crouching ? eyeHeight * 0.55 : eyeHeight
-    const groundY = getGroundHeight(camera.position.x, camera.position.z, camera.position.y) + currentEye
+    const groundY =
+      getGroundHeight(camera.position.x, camera.position.z, camera.position.y) +
+      currentEye
     if (camera.position.y <= groundY) {
       camera.position.y = groundY
       velocityY.current = 0
@@ -1227,7 +1970,12 @@ function FirstPersonControls({ onZoneText }: { onZoneText: (t: string) => void }
     const pz = camera.position.z
     for (let i = 0; i < TRIGGERS.length; i++) {
       const t = TRIGGERS[i]
-      if (px > t.zone.minX && px < t.zone.maxX && pz > t.zone.minZ && pz < t.zone.maxZ) {
+      if (
+        px > t.zone.minX &&
+        px < t.zone.maxX &&
+        pz > t.zone.minZ &&
+        pz < t.zone.maxZ
+      ) {
         if (lastTrigger.current !== i) {
           lastTrigger.current = i
           camera.position.copy(t.target)
@@ -1245,25 +1993,37 @@ function FirstPersonControls({ onZoneText }: { onZoneText: (t: string) => void }
     // reset trigger lock when not in any zone
     let inAny = false
     for (const t of TRIGGERS) {
-      if (px > t.zone.minX && px < t.zone.maxX && pz > t.zone.minZ && pz < t.zone.maxZ) { inAny = true; break }
+      if (
+        px > t.zone.minX &&
+        px < t.zone.maxX &&
+        pz > t.zone.minZ &&
+        pz < t.zone.maxZ
+      ) {
+        inAny = true
+        break
+      }
     }
     if (!inAny) lastTrigger.current = -1
 
     // zone-based hint text
-    if (px > -31 && px < -9 && pz > 11 && pz < 29) onZoneText('Asset showroom: food, characters, and urban kit pieces.')
+    if (px > -31 && px < -9 && pz > 11 && pz < 29)
+      onZoneText('Asset showroom: food, characters, and urban kit pieces.')
     else if (
       px > IMPOSSIBLE_HOUSE_REMOTE_X - IMPOSSIBLE_HOUSE_REMOTE_HALF_W + 1 &&
       px < IMPOSSIBLE_HOUSE_REMOTE_X + IMPOSSIBLE_HOUSE_REMOTE_HALF_W - 1 &&
       pz > IMPOSSIBLE_HOUSE_REMOTE_Z - IMPOSSIBLE_HOUSE_REMOTE_HALF_D + 1 &&
       pz < IMPOSSIBLE_HOUSE_REMOTE_Z + IMPOSSIBLE_HOUSE_REMOTE_HALF_D - 1
-    ) onZoneText('The foyer is far too large for the house outside.')
-    else if (pz < -8 && pz > -31.5 && px > -3) onZoneText('The stairs keep going down.')
+    )
+      onZoneText('The foyer is far too large for the house outside.')
+    else if (pz < -8 && pz > -31.5 && px > -3)
+      onZoneText('The stairs keep going down.')
     else if (
       px > HIDDEN_ROOM_CENTER_X - HIDDEN_ROOM_HALF_W + 1 &&
       px < HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W - 1 &&
       pz > HIDDEN_ROOM_CENTER_Z - HIDDEN_ROOM_HALF_D + 1 &&
       pz < HIDDEN_ROOM_CENTER_Z + HIDDEN_ROOM_HALF_D - 1
-    ) onZoneText('This room should not fit behind that door.')
+    )
+      onZoneText('This room should not fit behind that door.')
     else onZoneText('')
   })
 
@@ -1271,9 +2031,20 @@ function FirstPersonControls({ onZoneText }: { onZoneText: (t: string) => void }
 }
 
 /* ── GLB model helpers ─────────────────────────────── */
-function FoodProp({ url, position, scale = 1, rotation, ps1, simplify = false }: {
-  url: string; position: [number, number, number]; scale?: number
-  rotation?: [number, number, number]; ps1?: boolean; simplify?: boolean
+function FoodProp({
+  url,
+  position,
+  scale = 1,
+  rotation,
+  ps1,
+  simplify = false,
+}: {
+  url: string
+  position: [number, number, number]
+  scale?: number
+  rotation?: [number, number, number]
+  ps1?: boolean
+  simplify?: boolean
 }) {
   const { scene } = useGLTF(url)
   const cloned = scene.clone()
@@ -1292,13 +2063,26 @@ function FoodProp({ url, position, scale = 1, rotation, ps1, simplify = false }:
   )
 }
 
-function OutsideCharacter({ url, position, scale = 1, rotation, simplify = false }: {
-  url: string; position: [number, number, number]; scale?: number
-  rotation?: [number, number, number]; simplify?: boolean
+function OutsideCharacter({
+  url,
+  position,
+  scale = 1,
+  rotation,
+  simplify = false,
+}: {
+  url: string
+  position: [number, number, number]
+  scale?: number
+  rotation?: [number, number, number]
+  simplify?: boolean
 }) {
   const { scene } = useGLTF(url)
   const cloned = scene.clone()
-  applyPs1MaterialStyle(cloned, { affineUv: false, simplify, simplifyRatio: 0.65 })
+  applyPs1MaterialStyle(cloned, {
+    affineUv: false,
+    simplify,
+    simplifyRatio: 0.65,
+  })
   return (
     <primitive
       object={cloned}
@@ -1400,52 +2184,151 @@ function AssetShowroom() {
       </mesh>
 
       <DisplayPedestal position={[-9, 0, -3.5]} />
-      <FoodProp url="/models/showroom/food/burger.glb" position={[-9, 1, -3.5]} scale={0.9} />
+      <FoodProp
+        url="/models/showroom/food/burger.glb"
+        position={[-9, 1, -3.5]}
+        scale={0.9}
+      />
 
       <DisplayPedestal position={[-6, 0, -3.5]} />
-      <FoodProp url="/models/showroom/food/fries.glb" position={[-6, 1, -3.5]} scale={0.9} />
+      <FoodProp
+        url="/models/showroom/food/fries.glb"
+        position={[-6, 1, -3.5]}
+        scale={0.9}
+      />
 
       <DisplayPedestal position={[-3, 0, -3.5]} />
-      <FoodProp url="/models/showroom/food/donut.glb" position={[-3, 1, -3.5]} scale={1} />
+      <FoodProp
+        url="/models/showroom/food/donut.glb"
+        position={[-3, 1, -3.5]}
+        scale={1}
+      />
 
       <DisplayPedestal position={[0, 0, -3.5]} />
-      <FoodProp url="/models/showroom/food/soda-can.glb" position={[0, 1, -3.5]} scale={0.95} ps1 />
+      <FoodProp
+        url="/models/showroom/food/soda-can.glb"
+        position={[0, 1, -3.5]}
+        scale={0.95}
+        ps1
+      />
 
       <DisplayPedestal position={[3, 0, -3.5]} />
-      <FoodProp url="/models/showroom/food/cup-coffee.glb" position={[3, 1, -3.5]} scale={1} />
+      <FoodProp
+        url="/models/showroom/food/cup-coffee.glb"
+        position={[3, 1, -3.5]}
+        scale={1}
+      />
 
       <DisplayPedestal position={[6, 0, -3.5]} />
-      <FoodProp url="/models/showroom/food/hot-dog.glb" position={[6, 1, -3.5]} scale={1} />
+      <FoodProp
+        url="/models/showroom/food/hot-dog.glb"
+        position={[6, 1, -3.5]}
+        scale={1}
+      />
 
       <DisplayPedestal position={[9, 0, -3.5]} />
-      <FoodProp url="/models/showroom/food/sandwich.glb" position={[9, 1, -3.5]} scale={1} />
+      <FoodProp
+        url="/models/showroom/food/sandwich.glb"
+        position={[9, 1, -3.5]}
+        scale={1}
+      />
 
       <DisplayPedestal position={[-9, 0, 1.5]} />
-      <FoodProp url="/models/showroom/food/frappe.glb" position={[-9, 1, 1.5]} scale={0.95} ps1 />
+      <FoodProp
+        url="/models/showroom/food/frappe.glb"
+        position={[-9, 1, 1.5]}
+        scale={0.95}
+        ps1
+      />
 
       <DisplayPedestal position={[-6, 0, 1.5]} />
-      <FoodProp url="/models/showroom/food/bottle-ketchup.glb" position={[-6, 1, 1.5]} scale={0.95} />
+      <FoodProp
+        url="/models/showroom/food/bottle-ketchup.glb"
+        position={[-6, 1, 1.5]}
+        scale={0.95}
+      />
 
       <DisplayPedestal position={[-3, 0, 1.5]} />
-      <FoodProp url="/models/showroom/food/plate-dinner.glb" position={[-3, 1, 1.5]} scale={0.95} />
+      <FoodProp
+        url="/models/showroom/food/plate-dinner.glb"
+        position={[-3, 1, 1.5]}
+        scale={0.95}
+      />
 
-      <DisplayPedestal position={[0.5, 0, 2.5]} size={[1.4, 0.75, 1.4]} color="#4f5560" />
-      <OutsideCharacter url="/models/showroom/characters/character-a.glb" position={[0.5, 0.8, 2.5]} scale={1.1} rotation={[0, -0.3, 0]} />
+      <DisplayPedestal
+        position={[0.5, 0, 2.5]}
+        size={[1.4, 0.75, 1.4]}
+        color="#4f5560"
+      />
+      <OutsideCharacter
+        url="/models/showroom/characters/character-a.glb"
+        position={[0.5, 0.8, 2.5]}
+        scale={1.1}
+        rotation={[0, -0.3, 0]}
+      />
 
-      <DisplayPedestal position={[3.8, 0, 2.5]} size={[1.4, 0.75, 1.4]} color="#4f5560" />
-      <OutsideCharacter url="/models/showroom/characters/character-c.glb" position={[3.8, 0.8, 2.5]} scale={1.1} rotation={[0, 0.35, 0]} />
+      <DisplayPedestal
+        position={[3.8, 0, 2.5]}
+        size={[1.4, 0.75, 1.4]}
+        color="#4f5560"
+      />
+      <OutsideCharacter
+        url="/models/showroom/characters/character-c.glb"
+        position={[3.8, 0.8, 2.5]}
+        scale={1.1}
+        rotation={[0, 0.35, 0]}
+      />
 
-      <DisplayPedestal position={[7.1, 0, 2.5]} size={[1.4, 0.75, 1.4]} color="#4f5560" />
-      <OutsideCharacter url="/models/showroom/characters/character-f.glb" position={[7.1, 0.8, 2.5]} scale={1.1} rotation={[0, -0.2, 0]} />
+      <DisplayPedestal
+        position={[7.1, 0, 2.5]}
+        size={[1.4, 0.75, 1.4]}
+        color="#4f5560"
+      />
+      <OutsideCharacter
+        url="/models/showroom/characters/character-f.glb"
+        position={[7.1, 0.8, 2.5]}
+        scale={1.1}
+        rotation={[0, -0.2, 0]}
+      />
 
-      <DisplayPedestal position={[10.4, 0, 2.5]} size={[1.4, 0.75, 1.4]} color="#4f5560" />
-      <OutsideCharacter url="/models/showroom/characters/character-h.glb" position={[10.4, 0.8, 2.5]} scale={1.1} rotation={[0, 0.25, 0]} />
+      <DisplayPedestal
+        position={[10.4, 0, 2.5]}
+        size={[1.4, 0.75, 1.4]}
+        color="#4f5560"
+      />
+      <OutsideCharacter
+        url="/models/showroom/characters/character-h.glb"
+        position={[10.4, 0.8, 2.5]}
+        scale={1.1}
+        rotation={[0, 0.25, 0]}
+      />
 
       <group position={[7.5, 0, 6.2]}>
-        <FoodProp url="/models/showroom/urban/detail-bench.glb" position={[-3.6, 0, 0]} scale={1.4} simplify={false} />
-        <FoodProp url="/models/showroom/urban/detail-dumpster-closed.glb" position={[0.4, 0, 0.1]} scale={1.2} rotation={[0, -0.6, 0]} simplify={false} />
-        <FoodProp url="/models/showroom/urban/detail-light-double.glb" position={[4.4, 0, 0]} scale={1.25} simplify={false} />
-        <FoodProp url="/models/showroom/urban/detail-awning-wide.glb" position={[0.2, 0.2, -2.2]} scale={1.3} simplify={false} />
+        <FoodProp
+          url="/models/showroom/urban/detail-bench.glb"
+          position={[-3.6, 0, 0]}
+          scale={1.4}
+          simplify={false}
+        />
+        <FoodProp
+          url="/models/showroom/urban/detail-dumpster-closed.glb"
+          position={[0.4, 0, 0.1]}
+          scale={1.2}
+          rotation={[0, -0.6, 0]}
+          simplify={false}
+        />
+        <FoodProp
+          url="/models/showroom/urban/detail-light-double.glb"
+          position={[4.4, 0, 0]}
+          scale={1.25}
+          simplify={false}
+        />
+        <FoodProp
+          url="/models/showroom/urban/detail-awning-wide.glb"
+          position={[0.2, 0.2, -2.2]}
+          scale={1.3}
+          simplify={false}
+        />
       </group>
     </group>
   )
@@ -1453,11 +2336,26 @@ function AssetShowroom() {
 
 /* ── Hidden Room (remote, larger than the exterior suggests) */
 function HiddenRoomInterior() {
-  const wallMap = useLoader(THREE.TextureLoader, '/textures/diner_candidates/beige_wall_002_diff_2k.jpg')
-  const floorMap = useLoader(THREE.TextureLoader, '/textures/diner_candidates/portal_plank.png')
-  const plantMapA = useLoader(THREE.TextureLoader, '/textures/diner_candidates/portal_plant_a.png')
-  const plantMapB = useLoader(THREE.TextureLoader, '/textures/diner_candidates/portal_plant_b.png')
-  const posterMap = useLoader(THREE.TextureLoader, '/textures/diner_candidates/portal_building_202.png')
+  const wallMap = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/beige_wall_002_diff_2k.jpg',
+  )
+  const floorMap = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/portal_plank.png',
+  )
+  const plantMapA = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/portal_plant_a.png',
+  )
+  const plantMapB = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/portal_plant_b.png',
+  )
+  const posterMap = useLoader(
+    THREE.TextureLoader,
+    '/textures/diner_candidates/portal_building_202.png',
+  )
 
   useEffect(() => {
     setupPs1Texture(wallMap, 9, 4)
@@ -1473,41 +2371,125 @@ function HiddenRoomInterior() {
 
   return (
     <group>
-      <mesh position={[HIDDEN_ROOM_CENTER_X, 0.01, HIDDEN_ROOM_CENTER_Z]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[HIDDEN_ROOM_HALF_W * 2, HIDDEN_ROOM_HALF_D * 2]} />
-        <meshStandardMaterial map={floorMap} color="#b3a285" flatShading roughness={0.95} />
+      <mesh
+        position={[HIDDEN_ROOM_CENTER_X, 0.01, HIDDEN_ROOM_CENTER_Z]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
+        <planeGeometry
+          args={[HIDDEN_ROOM_HALF_W * 2, HIDDEN_ROOM_HALF_D * 2]}
+        />
+        <meshStandardMaterial
+          map={floorMap}
+          color="#b3a285"
+          flatShading
+          roughness={0.95}
+        />
       </mesh>
       <mesh position={[HIDDEN_ROOM_CENTER_X, 5, HIDDEN_ROOM_CENTER_Z]}>
-        <boxGeometry args={[HIDDEN_ROOM_HALF_W * 2, 0.2, HIDDEN_ROOM_HALF_D * 2]} />
+        <boxGeometry
+          args={[HIDDEN_ROOM_HALF_W * 2, 0.2, HIDDEN_ROOM_HALF_D * 2]}
+        />
         <meshStandardMaterial color="#d9d0c0" flatShading roughness={0.9} />
       </mesh>
 
-      <mesh position={[HIDDEN_ROOM_CENTER_X - HIDDEN_ROOM_HALF_W, 2.5, HIDDEN_ROOM_CENTER_Z]}>
+      <mesh
+        position={[
+          HIDDEN_ROOM_CENTER_X - HIDDEN_ROOM_HALF_W,
+          2.5,
+          HIDDEN_ROOM_CENTER_Z,
+        ]}
+      >
         <boxGeometry args={[0.2, 5, HIDDEN_ROOM_HALF_D * 2]} />
-        <meshStandardMaterial map={wallMap} color="#e5d8c3" flatShading roughness={0.9} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#e5d8c3"
+          flatShading
+          roughness={0.9}
+        />
       </mesh>
-      <mesh position={[HIDDEN_ROOM_CENTER_X, 2.5, HIDDEN_ROOM_CENTER_Z - HIDDEN_ROOM_HALF_D]}>
+      <mesh
+        position={[
+          HIDDEN_ROOM_CENTER_X,
+          2.5,
+          HIDDEN_ROOM_CENTER_Z - HIDDEN_ROOM_HALF_D,
+        ]}
+      >
         <boxGeometry args={[HIDDEN_ROOM_HALF_W * 2, 5, 0.2]} />
-        <meshStandardMaterial map={wallMap} color="#e5d8c3" flatShading roughness={0.9} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#e5d8c3"
+          flatShading
+          roughness={0.9}
+        />
       </mesh>
-      <mesh position={[HIDDEN_ROOM_CENTER_X, 2.5, HIDDEN_ROOM_CENTER_Z + HIDDEN_ROOM_HALF_D]}>
+      <mesh
+        position={[
+          HIDDEN_ROOM_CENTER_X,
+          2.5,
+          HIDDEN_ROOM_CENTER_Z + HIDDEN_ROOM_HALF_D,
+        ]}
+      >
         <boxGeometry args={[HIDDEN_ROOM_HALF_W * 2, 5, 0.2]} />
-        <meshStandardMaterial map={wallMap} color="#e5d8c3" flatShading roughness={0.9} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#e5d8c3"
+          flatShading
+          roughness={0.9}
+        />
       </mesh>
-      <mesh position={[HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W, 2.5, HIDDEN_ROOM_CENTER_Z - HIDDEN_ROOM_SIDE_SEGMENT_OFFSET_Z]}>
+      <mesh
+        position={[
+          HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W,
+          2.5,
+          HIDDEN_ROOM_CENTER_Z - HIDDEN_ROOM_SIDE_SEGMENT_OFFSET_Z,
+        ]}
+      >
         <boxGeometry args={[0.2, 5, HIDDEN_ROOM_SIDE_SEGMENT_D * 2]} />
-        <meshStandardMaterial map={wallMap} color="#e5d8c3" flatShading roughness={0.9} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#e5d8c3"
+          flatShading
+          roughness={0.9}
+        />
       </mesh>
-      <mesh position={[HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W, 2.5, HIDDEN_ROOM_CENTER_Z + HIDDEN_ROOM_SIDE_SEGMENT_OFFSET_Z]}>
+      <mesh
+        position={[
+          HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W,
+          2.5,
+          HIDDEN_ROOM_CENTER_Z + HIDDEN_ROOM_SIDE_SEGMENT_OFFSET_Z,
+        ]}
+      >
         <boxGeometry args={[0.2, 5, HIDDEN_ROOM_SIDE_SEGMENT_D * 2]} />
-        <meshStandardMaterial map={wallMap} color="#e5d8c3" flatShading roughness={0.9} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#e5d8c3"
+          flatShading
+          roughness={0.9}
+        />
       </mesh>
-      <mesh position={[HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W, 4.1, HIDDEN_ROOM_CENTER_Z]}>
+      <mesh
+        position={[
+          HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W,
+          4.1,
+          HIDDEN_ROOM_CENTER_Z,
+        ]}
+      >
         <boxGeometry args={[0.2, 1.8, 2.2]} />
-        <meshStandardMaterial map={wallMap} color="#e5d8c3" flatShading roughness={0.9} />
+        <meshStandardMaterial
+          map={wallMap}
+          color="#e5d8c3"
+          flatShading
+          roughness={0.9}
+        />
       </mesh>
 
-      <group position={[HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W - 0.01, 0, HIDDEN_ROOM_CENTER_Z]}>
+      <group
+        position={[
+          HIDDEN_ROOM_CENTER_X + HIDDEN_ROOM_HALF_W - 0.01,
+          0,
+          HIDDEN_ROOM_CENTER_Z,
+        ]}
+      >
         <mesh position={[0, 1.75, -1]}>
           <boxGeometry args={[0.08, 3.5, 0.08]} />
           <meshStandardMaterial color="#4d3a29" flatShading />
@@ -1527,22 +2509,39 @@ function HiddenRoomInterior() {
       </group>
 
       {[-8, -3, 2, 7].map((x) => (
-        <mesh key={x} position={[HIDDEN_ROOM_CENTER_X + x, 4.2, HIDDEN_ROOM_CENTER_Z]}>
+        <mesh
+          key={x}
+          position={[HIDDEN_ROOM_CENTER_X + x, 4.2, HIDDEN_ROOM_CENTER_Z]}
+        >
           <boxGeometry args={[1.6, 0.08, 0.35]} />
-          <meshStandardMaterial color="#f0e0aa" emissive="#f0e0aa" emissiveIntensity={1.2} flatShading />
+          <meshStandardMaterial
+            color="#f0e0aa"
+            emissive="#f0e0aa"
+            emissiveIntensity={1.2}
+            flatShading
+          />
         </mesh>
       ))}
 
-      <mesh position={[HIDDEN_ROOM_CENTER_X, 0.14, HIDDEN_ROOM_CENTER_Z]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh
+        position={[HIDDEN_ROOM_CENTER_X, 0.14, HIDDEN_ROOM_CENTER_Z]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
         <planeGeometry args={[14, 10]} />
         <meshStandardMaterial color="#6a2835" flatShading roughness={1} />
       </mesh>
 
       {[-9, 0, 9].map((x) => (
-        <Booth key={x} position={[HIDDEN_ROOM_CENTER_X + x, 0, HIDDEN_ROOM_CENTER_Z - 6]} />
+        <Booth
+          key={x}
+          position={[HIDDEN_ROOM_CENTER_X + x, 0, HIDDEN_ROOM_CENTER_Z - 6]}
+        />
       ))}
       {[-9, 0, 9].map((x) => (
-        <Booth key={`south-${x}`} position={[HIDDEN_ROOM_CENTER_X + x, 0, HIDDEN_ROOM_CENTER_Z + 6]} />
+        <Booth
+          key={`south-${x}`}
+          position={[HIDDEN_ROOM_CENTER_X + x, 0, HIDDEN_ROOM_CENTER_Z + 6]}
+        />
       ))}
 
       <mesh position={[HIDDEN_ROOM_CENTER_X - 11, 0.55, HIDDEN_ROOM_CENTER_Z]}>
@@ -1555,20 +2554,34 @@ function HiddenRoomInterior() {
       </mesh>
 
       {[-6, 6].map((z) => (
-        <group key={z} position={[HIDDEN_ROOM_CENTER_X + 11.5, 0, HIDDEN_ROOM_CENTER_Z + z]}>
+        <group
+          key={z}
+          position={[HIDDEN_ROOM_CENTER_X + 11.5, 0, HIDDEN_ROOM_CENTER_Z + z]}
+        >
           <mesh position={[0, 0.65, 0]}>
             <boxGeometry args={[3, 1.3, 0.45]} />
-            <meshStandardMaterial color={RED_VINYL} flatShading roughness={0.6} />
+            <meshStandardMaterial
+              color={RED_VINYL}
+              flatShading
+              roughness={0.6}
+            />
           </mesh>
           <mesh position={[0, 1.3, 0.22]}>
             <boxGeometry args={[3, 0.8, 0.15]} />
-            <meshStandardMaterial color={RED_VINYL} flatShading roughness={0.6} />
+            <meshStandardMaterial
+              color={RED_VINYL}
+              flatShading
+              roughness={0.6}
+            />
           </mesh>
         </group>
       ))}
 
       {[-8, 0, 8].map((x) => (
-        <group key={`column-${x}`} position={[HIDDEN_ROOM_CENTER_X + x, 0, HIDDEN_ROOM_CENTER_Z]}>
+        <group
+          key={`column-${x}`}
+          position={[HIDDEN_ROOM_CENTER_X + x, 0, HIDDEN_ROOM_CENTER_Z]}
+        >
           <mesh position={[0, 2.5, 0]}>
             <boxGeometry args={[0.45, 5, 0.45]} />
             <meshStandardMaterial color="#c6baa5" flatShading roughness={0.9} />
@@ -1576,9 +2589,21 @@ function HiddenRoomInterior() {
         </group>
       ))}
 
-      <mesh position={[HIDDEN_ROOM_CENTER_X, 2.8, HIDDEN_ROOM_CENTER_Z - HIDDEN_ROOM_HALF_D + 0.15]}>
+      <mesh
+        position={[
+          HIDDEN_ROOM_CENTER_X,
+          2.8,
+          HIDDEN_ROOM_CENTER_Z - HIDDEN_ROOM_HALF_D + 0.15,
+        ]}
+      >
         <planeGeometry args={[7, 3.2]} />
-        <meshStandardMaterial map={posterMap} transparent alphaTest={0.1} side={THREE.DoubleSide} flatShading />
+        <meshStandardMaterial
+          map={posterMap}
+          transparent
+          alphaTest={0.1}
+          side={THREE.DoubleSide}
+          flatShading
+        />
       </mesh>
 
       {[
@@ -1589,11 +2614,22 @@ function HiddenRoomInterior() {
       ].map(([x, z, texture], i) => (
         <mesh key={i} position={[x as number, 1.2, z as number]}>
           <planeGeometry args={[2.2, 2.4]} />
-          <meshStandardMaterial map={texture as THREE.Texture} transparent alphaTest={0.2} side={THREE.DoubleSide} flatShading />
+          <meshStandardMaterial
+            map={texture as THREE.Texture}
+            transparent
+            alphaTest={0.2}
+            side={THREE.DoubleSide}
+            flatShading
+          />
         </mesh>
       ))}
 
-      <pointLight position={[HIDDEN_ROOM_CENTER_X, 4.2, HIDDEN_ROOM_CENTER_Z]} intensity={3.5} color="#f4dfb2" distance={24} />
+      <pointLight
+        position={[HIDDEN_ROOM_CENTER_X, 4.2, HIDDEN_ROOM_CENTER_Z]}
+        intensity={3.5}
+        color="#f4dfb2"
+        distance={24}
+      />
     </group>
   )
 }
@@ -1613,14 +2649,23 @@ function UpStaircase() {
         return (
           <mesh key={i} position={[-6.75, y, z]}>
             <boxGeometry args={[1.5, stepH, stepD]} />
-            <meshStandardMaterial color={i % 2 === 0 ? '#555' : '#4a4a4a'} flatShading roughness={0.9} />
+            <meshStandardMaterial
+              color={i % 2 === 0 ? '#555' : '#4a4a4a'}
+              flatShading
+              roughness={0.9}
+            />
           </mesh>
         )
       })}
       {/* Handrail (open sides, no walls) */}
       <mesh position={[-5.9, 3.1, -3]} rotation={[Math.atan2(5.1, 8), 0, 0]}>
         <boxGeometry args={[0.06, 0.06, Math.sqrt(8 * 8 + 5.1 * 5.1)]} />
-        <meshStandardMaterial color="#666" metalness={0.7} roughness={0.3} flatShading />
+        <meshStandardMaterial
+          color="#666"
+          metalness={0.7}
+          roughness={0.3}
+          flatShading
+        />
       </mesh>
     </group>
   )
@@ -1628,7 +2673,11 @@ function UpStaircase() {
 
 /* ── One-Way Window Shed ─────────────────────────── */
 function OneWayShed() {
-  const cx = 15, cz = -4, hw = 2, hd = 2, h = 3
+  const cx = 15,
+    cz = -4,
+    hw = 2,
+    hd = 2,
+    h = 3
   return (
     <group>
       {/* Floor + ceiling provided by ShedInterior (large room) */}
@@ -1691,7 +2740,12 @@ function OneWayShed() {
       </mesh>
 
       {/* Light */}
-      <pointLight position={[cx, 2.5, cz]} intensity={2} color="#ffeecc" distance={6} />
+      <pointLight
+        position={[cx, 2.5, cz]}
+        intensity={2}
+        color="#ffeecc"
+        distance={6}
+      />
     </group>
   )
 }
@@ -1743,7 +2797,12 @@ function ShedInterior() {
         <boxGeometry args={[0.5, 0.05, 0.5]} />
         <meshStandardMaterial color="#8b7355" flatShading />
       </mesh>
-      {[[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]].map(([lx, lz], i) => (
+      {[
+        [-0.2, -0.2],
+        [0.2, -0.2],
+        [-0.2, 0.2],
+        [0.2, 0.2],
+      ].map(([lx, lz], i) => (
         <mesh key={i} position={[21 + lx, 0.25, -6 + lz]}>
           <boxGeometry args={[0.04, 0.5, 0.04]} />
           <meshStandardMaterial color="#8b7355" flatShading />
@@ -1751,7 +2810,12 @@ function ShedInterior() {
       ))}
 
       {/* Lights */}
-      <pointLight position={[19, 7, -4]} intensity={3} color="#ffeecc" distance={14} />
+      <pointLight
+        position={[19, 7, -4]}
+        intensity={3}
+        color="#ffeecc"
+        distance={14}
+      />
     </group>
   )
 }
@@ -1763,7 +2827,8 @@ function GhostFigure({ position }: { position: [number, number, number] }) {
   useFrame(() => {
     if (meshRef.current) {
       const p = camera.position
-      const outside = p.x > W + 0.5 || p.x < -W - 0.5 || p.z > W + 0.5 || p.z < -W - 0.5
+      const outside =
+        p.x > W + 0.5 || p.x < -W - 0.5 || p.z > W + 0.5 || p.z < -W - 0.5
       meshRef.current.visible = outside
     }
   })
@@ -1800,15 +2865,39 @@ function SecondFloor() {
       {/* Floor — with hole for staircase */}
       <mesh position={[1.6, 0.16, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[12.8, S]} />
-        <meshStandardMaterial map={upperFloorMap} color="#b7aa97" flatShading roughness={0.95} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
+        <meshStandardMaterial
+          map={upperFloorMap}
+          color="#b7aa97"
+          flatShading
+          roughness={0.95}
+          polygonOffset
+          polygonOffsetFactor={-1}
+          polygonOffsetUnits={-1}
+        />
       </mesh>
       <mesh position={[-6.4, 0.16, 4.8]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[3.2, 6.4]} />
-        <meshStandardMaterial map={upperFloorMap} color="#b7aa97" flatShading roughness={0.95} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
+        <meshStandardMaterial
+          map={upperFloorMap}
+          color="#b7aa97"
+          flatShading
+          roughness={0.95}
+          polygonOffset
+          polygonOffsetFactor={-1}
+          polygonOffsetUnits={-1}
+        />
       </mesh>
       <mesh position={[-6.4, 0.16, -7.75]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[3.2, 0.5]} />
-        <meshStandardMaterial map={upperFloorMap} color="#b7aa97" flatShading roughness={0.95} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
+        <meshStandardMaterial
+          map={upperFloorMap}
+          color="#b7aa97"
+          flatShading
+          roughness={0.95}
+          polygonOffset
+          polygonOffsetFactor={-1}
+          polygonOffsetUnits={-1}
+        />
       </mesh>
       {/* Ceiling */}
       <mesh position={[0, 4, 0]}>
@@ -1862,25 +2951,14 @@ function SecondFloor() {
       ))}
 
       {/* Light */}
-      <pointLight position={[0, 3.5, 0]} intensity={3} color="#ffe4b5" distance={16} />
+      <pointLight
+        position={[0, 3.5, 0]}
+        intensity={3}
+        color="#ffe4b5"
+        distance={16}
+      />
     </group>
   )
-}
-
-/* ── Debug renderer stats ─────────────────────────── */
-function DebugStats() {
-  const { gl } = useThree()
-  useEffect(() => {
-    const id = setInterval(() => {
-      const info = gl.info
-      console.log(
-        `[GL] calls:${info.render.calls} tris:${info.render.triangles} ` +
-        `geom:${info.memory.geometries} tex:${info.memory.textures}`
-      )
-    }, 3000)
-    return () => clearInterval(id)
-  }, [gl])
-  return null
 }
 
 /* ── Scene ──────────────────────────────────────────── */
@@ -1892,10 +2970,20 @@ function Scene({ onZoneText }: { onZoneText: (t: string) => void }) {
       {/* === OUTDOOR === */}
       <OutdoorGround />
       {/* Outdoor lighting */}
-      <directionalLight position={[10, 15, 10]} intensity={1.5} color="#8899bb" />
+      <directionalLight
+        position={[10, 15, 10]}
+        intensity={1.5}
+        color="#8899bb"
+      />
 
       {/* Character outside near entrance */}
-      <OutsideCharacter url="/models/businessman.glb" position={[5, 0, W + 2]} scale={1.2} rotation={[0, Math.PI, 0]} simplify />
+      <OutsideCharacter
+        url="/models/businessman.glb"
+        position={[5, 0, W + 2]}
+        scale={1.2}
+        rotation={[0, Math.PI, 0]}
+        simplify
+      />
 
       <AssetShowroom />
       <ImpossibleHouseExterior />
@@ -1905,7 +2993,12 @@ function Scene({ onZoneText }: { onZoneText: (t: string) => void }) {
       {/* Main diner lighting */}
       <ambientLight intensity={2.5} />
       <directionalLight position={[4, 6, 3]} intensity={3} color="#f5e6c8" />
-      <pointLight position={[0, 4.5, 0]} intensity={5} color="#ffe4b5" distance={18} />
+      <pointLight
+        position={[0, 4.5, 0]}
+        intensity={5}
+        color="#ffe4b5"
+        distance={18}
+      />
 
       {/* === NORMAL DINER === */}
       <TileFloor cx={0} cz={0} hw={W} hd={W} />
@@ -1938,31 +3031,85 @@ function Scene({ onZoneText }: { onZoneText: (t: string) => void }) {
       {/* "STAFF ONLY" sign + light above kitchen opening */}
       <mesh position={[-1, 3.8, -W + 0.15]}>
         <boxGeometry args={[1.4, 0.3, 0.04]} />
-        <meshStandardMaterial color="#cc2222" emissive="#cc2222" emissiveIntensity={0.8} flatShading />
+        <meshStandardMaterial
+          color="#cc2222"
+          emissive="#cc2222"
+          emissiveIntensity={0.8}
+          flatShading
+        />
       </mesh>
 
       {/* Green "EXIT" above front door */}
       <mesh position={[2, 3.9, W - 0.05]}>
         <boxGeometry args={[0.8, 0.2, 0.04]} />
-        <meshStandardMaterial color="#22cc22" emissive="#22cc22" emissiveIntensity={1.5} flatShading />
+        <meshStandardMaterial
+          color="#22cc22"
+          emissive="#22cc22"
+          emissiveIntensity={1.5}
+          flatShading
+        />
       </mesh>
 
       {/* === FOOD PROPS on counter and tables === */}
       <FoodProp url="/models/cup.glb" position={[-4, 1.15, -3.5]} scale={0.6} />
       <FoodProp url="/models/cup.glb" position={[-1, 1.15, -3.5]} scale={0.6} />
-      <FoodProp url="/models/burger.glb" position={[-2.5, 1.15, -3.5]} scale={0.5} />
-      <FoodProp url="/models/donut.glb" position={[0.5, 1.15, -3.5]} scale={0.5} />
-      <FoodProp url="/models/soda_cup.glb" position={[2.5, 1.2, 0.5]} scale={0.4} ps1 />
+      <FoodProp
+        url="/models/burger.glb"
+        position={[-2.5, 1.15, -3.5]}
+        scale={0.5}
+      />
+      <FoodProp
+        url="/models/donut.glb"
+        position={[0.5, 1.15, -3.5]}
+        scale={0.5}
+      />
+      <FoodProp
+        url="/models/soda_cup.glb"
+        position={[2.5, 1.2, 0.5]}
+        scale={0.4}
+        ps1
+      />
       {/* Food on booth tables */}
-      <FoodProp url="/models/burger.glb" position={[6.5, 0.95, -5]} scale={0.4} />
+      <FoodProp
+        url="/models/burger.glb"
+        position={[6.5, 0.95, -5]}
+        scale={0.4}
+      />
       <FoodProp url="/models/cup.glb" position={[6.2, 0.95, -1]} scale={0.5} />
-      <FoodProp url="/models/soda_cup.glb" position={[6.8, 0.95, 3]} scale={0.4} ps1 />
-      <FoodProp url="/models/donut.glb" position={[6.5, 0.95, 3.3]} scale={0.4} />
+      <FoodProp
+        url="/models/soda_cup.glb"
+        position={[6.8, 0.95, 3]}
+        scale={0.4}
+        ps1
+      />
+      <FoodProp
+        url="/models/donut.glb"
+        position={[6.5, 0.95, 3.3]}
+        scale={0.4}
+      />
 
       {/* === CHARACTERS OUTSIDE WINDOWS === */}
-      <OutsideCharacter url="/models/businessman.glb" position={[W + 1.5, 0, -2]} scale={1.2} rotation={[0, -Math.PI / 2, 0]} simplify />
-      <OutsideCharacter url="/models/suit.glb" position={[W + 2, 0, 2]} scale={1.2} rotation={[0, -Math.PI / 3, 0]} simplify />
-      <OutsideCharacter url="/models/worker.glb" position={[W + 1.2, 0, 5]} scale={1.2} rotation={[0, -Math.PI / 2, 0]} simplify />
+      <OutsideCharacter
+        url="/models/businessman.glb"
+        position={[W + 1.5, 0, -2]}
+        scale={1.2}
+        rotation={[0, -Math.PI / 2, 0]}
+        simplify
+      />
+      <OutsideCharacter
+        url="/models/suit.glb"
+        position={[W + 2, 0, 2]}
+        scale={1.2}
+        rotation={[0, -Math.PI / 3, 0]}
+        simplify
+      />
+      <OutsideCharacter
+        url="/models/worker.glb"
+        position={[W + 1.2, 0, 5]}
+        scale={1.2}
+        rotation={[0, -Math.PI / 2, 0]}
+        simplify
+      />
 
       {/* === ONE-WAY WINDOW SHED (exterior) + LARGE INTERIOR (remote) === */}
       <OneWayShed />
@@ -1978,7 +3125,12 @@ function Scene({ onZoneText }: { onZoneText: (t: string) => void }) {
       <SecondFloor />
 
       {/* === DINER SCENE MODEL (outside) === */}
-      <FoodProp url="/models/diner_scene.glb" position={[-12, 0.05, 12]} scale={1} simplify={false} />
+      <FoodProp
+        url="/models/diner_scene.glb"
+        position={[-12, 0.05, 12]}
+        scale={1}
+        simplify={false}
+      />
 
       {/* === HIDDEN ROOM (bigger inside than outside) === */}
       <HiddenRoomInterior />
@@ -1987,7 +3139,6 @@ function Scene({ onZoneText }: { onZoneText: (t: string) => void }) {
       <InfiniteStaircase />
 
       <FirstPersonControls onZoneText={onZoneText} />
-      <DebugStats />
     </>
   )
 }
@@ -2022,13 +3173,17 @@ export default function Inspection() {
           ) : (
             <>
               <p>A quiet place. The jukebox hums softly.</p>
-              <p className="inspect-hint">Click to look around. WASD to move.</p>
+              <p className="inspect-hint">
+                Click to look around. WASD to move.
+              </p>
             </>
           )}
         </div>
       </div>
 
-      <a href="/" className="inspect-home">HOME</a>
+      <a href="/" className="inspect-home">
+        HOME
+      </a>
     </div>
   )
 }
